@@ -1,0 +1,13 @@
+uploads = []
+
+[[generated]]
+id = "UpBSl9KGlKp6Km4zeMKBu"
+uri = "file://attached_assets/generated_images/footer_support_woman.png"
+type = "image"
+title = "footer support woman"
+
+[[outputs]]
+id = "XJ3tHdnzZp8_OdaAjsVUH"
+uri = "file://docs/PROJECT_DOCUMENTATION.md"
+type = "text"
+title = "TradeVault — Complete Project Documentation"

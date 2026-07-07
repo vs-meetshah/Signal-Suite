@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pine Signal Lab — Complete Project Documentation</title>
+<style>
+  :root {
+    --fg: #1f2328;
+    --muted: #57606a;
+    --bg: #ffffff;
+    --border: #d0d7de;
+    --code-bg: #f6f8fa;
+    --link: #0969da;
+    --table-header: #f6f8fa;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 960px;
+    margin: 2.5rem auto;
+    padding: 0 1.25rem 4rem;
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  h1, h2, h3, h4 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+  h3 { font-size: 1.2rem; }
+  h4 { font-size: 1.05rem; }
+  p { margin: 0.75rem 0; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { padding-left: 1.6rem; }
+  li { margin: 0.25rem 0; }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--code-bg);
+    padding: 0.15em 0.35em;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.875em;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    display: block;
+    overflow-x: auto;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--table-header);
+    font-weight: 600;
+  }
+  tr:nth-child(even) td { background: #fafbfc; }
+  strong { font-weight: 600; }
+  blockquote {
+    border-left: 4px solid var(--border);
+    padding-left: 1rem;
+    color: var(--muted);
+    margin: 1rem 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Pine Signal Lab — Complete Project Documentation</h1>
+
+<p>A premium TradingView indicators &amp; strategies marketplace tailored for the
+Indian market. This document is intended as a developer-facing reference
+covering the entire system: tech stack, data model, pages, features,
+business rules, REST API and admin tooling.</p>
+
+<hr>
+
+<h2>1. Overview</h2>
+
+<p><strong>Product:</strong> Pine Signal Lab is a curated marketplace where retail traders can
+browse, trial and subscribe to professionally built TradingView indicators
+and strategies. Access is granted by inviting the customer's TradingView
+username to invite-only Pine scripts after the order is approved by an
+admin.</p>
+
+<p><strong>Audience:</strong> Indian retail traders. All pricing is shown in INR (₹).</p>
+
+<p><strong>Core flows:</strong></p>
+<ol>
+  <li>Browse catalog → open indicator detail → pick version &amp; duration → add to cart</li>
+  <li>Email-based sign-up / sign-in → checkout → order goes to "pending"</li>
+  <li>Admin reviews pending orders, approves (or rejects with reason)</li>
+  <li>On approval, customer dashboard shows the subscription as "active"
+    with days remaining</li>
+</ol>
+
+<hr>
+
+<h2>2. Tech Stack</h2>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Technology</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Frontend</td><td>React 18 + Vite + TypeScript</td></tr>
+    <tr><td>Routing</td><td>wouter</td></tr>
+    <tr><td>Data fetch</td><td>TanStack Query v5</td></tr>
+    <tr><td>UI library</td><td>shadcn/ui (Radix primitives + Tailwind)</td></tr>
+    <tr><td>Styling</td><td>TailwindCSS, custom CSS vars in <code>index.css</code>, dark-mode via <code>class</code></td></tr>
+    <tr><td>Animation</td><td>framer-motion</td></tr>
+    <tr><td>Forms</td><td>react-hook-form + zod</td></tr>
+    <tr><td>Icons</td><td>lucide-react, react-icons (<code>si</code> for brand logos)</td></tr>
+    <tr><td>Backend</td><td>Node.js + Express</td></tr>
+    <tr><td>ORM</td><td>Drizzle ORM</td></tr>
+    <tr><td>Database</td><td>PostgreSQL (Replit-managed; access via <code>DATABASE_URL</code>)</td></tr>
+    <tr><td>Auth</td><td>Server-side sessions (<code>express-session</code>, secret = <code>SESSION_SECRET</code>)</td></tr>
+    <tr><td>Validation</td><td>zod (shared schemas in <code>shared/schema.ts</code>)</td></tr>
+  </tbody>
+</table>
+
+<p>The Vite dev server and the Express API are served on the same port; routes
+prefixed with <code>/api/*</code> go to Express and everything else is handled by
+the React SPA.</p>
+
+<hr>
+
+<h2>3. Repository Layout</h2>
+
+<pre><code>client/
+  src/
+    App.tsx                # Router &amp; providers
+    main.tsx               # React entrypoint
+    index.css              # Theme tokens (HSL CSS vars), light &amp; dark
+    pages/
+      home.tsx             # Landing page
+      indicators.tsx       # Catalog
+      indicator-detail.tsx # Product detail + pricing dialog
+      cart.tsx             # Cart page
+      checkout.tsx         # Checkout (collect TradingView username, etc.)
+      dashboard.tsx        # Customer dashboard (orders, access, watchlist)
+      admin.tsx            # Admin shell + sidebar
+      support.tsx          # Help &amp; Support
+      about.tsx            # About Pine Signal Lab
+      not-found.tsx
+    components/
+      navbar.tsx           # Top navigation
+      auth-provider.tsx    # Session-aware auth context
+      auth-modal.tsx       # Email-first sign in / sign up modal
+      cart-provider.tsx    # Cart context (localStorage-backed)
+      indicator-card.tsx   # Catalog card (with watchlist bookmark)
+      chart-preview.tsx    # Synthetic candle chart used on cards
+      theme-toggle.tsx     # Light/dark switch
+      ui/*                 # shadcn primitives
+      admin/
+        admin-dashboard.tsx
+        admin-editor.tsx
+        admin-analytics.tsx
+server/
+  index.ts                 # Express bootstrap, session middleware
+  routes.ts                # All REST endpoints
+  storage.ts               # IStorage interface + Postgres implementation
+  db.ts                    # Drizzle client
+  seed.ts                  # Seeds default indicators &amp; admin user
+  static.ts                # Production static serving
+  vite.ts                  # Dev integration with Vite
+shared/
+  schema.ts                # Drizzle tables + zod insert/update schemas
+docs/
+  PROJECT_DOCUMENTATION.md # This file
+</code></pre>
+
+<hr>
+
+<h2>4. Data Model</h2>
+
+<p>All tables live in <code>shared/schema.ts</code>. Drizzle generates strongly-typed
+<code>Indicator</code>, <code>User</code>, <code>Order</code> and <code>OrderItem</code> types that are reused on the
+frontend through the <code>@shared/*</code> alias.</p>
+
+<h3>4.1 <code>indicators</code></h3>
+<table>
+  <thead>
+    <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>id</td><td>serial PK</td><td></td></tr>
+    <tr><td>name, slug</td><td>text</td><td>slug is unique, used in URLs</td></tr>
+    <tr><td>shortDescription</td><td>text</td><td>listing card subtitle</td></tr>
+    <tr><td>description</td><td>text</td><td>long copy on detail page</td></tr>
+    <tr><td>category</td><td>text</td><td>e.g. "Trend Following", "Smart Money"</td></tr>
+    <tr><td>tier</td><td>text</td><td><code>"free"</code> or <code>"premium"</code> (default <code>premium</code>)</td></tr>
+    <tr><td>price</td><td>text (INR)</td><td>monthly base price; <code>"0"</code> for free</td></tr>
+    <tr><td>videoUrl, imageUrl</td><td>text</td><td>optional media</td></tr>
+    <tr><td>features</td><td>text[]</td><td>bullet points</td></tr>
+    <tr><td>winRate, avgReturn, totalTrades, avgRR, profitFactor</td><td>text</td><td>display-only stats</td></tr>
+    <tr><td>trialDays</td><td>integer</td><td>default 7 (we display 15 in UI)</td></tr>
+    <tr><td>markets</td><td>text[]</td><td>"NIFTY", "Forex", "Crypto", "Stocks", "Commodities"</td></tr>
+    <tr><td>bestTimeframes</td><td>text[]</td><td>"1m", "5m", "15m", "1H", "4H", "1D", "1W"</td></tr>
+    <tr><td>signalLogic, entryConditions, exitConditions, stopLossStrategy, targetStrategy, recommendedSettings</td><td>text</td><td>rich description fields</td></tr>
+    <tr><td>nonRepainting</td><td>boolean</td><td>shown as a trust badge</td></tr>
+    <tr><td>faqs</td><td>jsonb</td><td><code>{q,a}[]</code></td></tr>
+    <tr><td>tags</td><td>text[]</td><td></td></tr>
+    <tr><td>bestMarket, tradingViewSymbol</td><td>text</td><td></td></tr>
+    <tr><td>rating, reviewCount</td><td>text / integer</td><td>shown on the card</td></tr>
+    <tr><td>versionLabel, publishedDate, developer</td><td>text</td><td>meta-info</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 <code>users</code></h3>
+<table>
+  <thead>
+    <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>id</td><td>serial PK</td><td></td></tr>
+    <tr><td>firstName, lastName</td><td>text</td><td></td></tr>
+    <tr><td>username</td><td>text</td><td>display handle (not unique)</td></tr>
+    <tr><td>email</td><td>text UNIQUE</td><td>login key</td></tr>
+    <tr><td>mobileNumber</td><td>text</td><td>E.164-ish, validated regex</td></tr>
+    <tr><td>tradingViewUsername</td><td>text</td><td>required for invite-only access</td></tr>
+    <tr><td>isAdmin</td><td>boolean</td><td>bootstrapped via <code>ADMIN_EMAIL</code> env var</td></tr>
+    <tr><td>createdAt</td><td>timestamp</td><td></td></tr>
+  </tbody>
+</table>
+
+<h3>4.3 <code>orders</code></h3>
+<table>
+  <thead>
+    <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>id</td><td>serial PK</td><td></td></tr>
+    <tr><td>userId</td><td>integer FK</td><td></td></tr>
+    <tr><td>status</td><td>text</td><td><code>pending</code> (default), <code>approved</code>, <code>rejected</code></td></tr>
+    <tr><td>totalAmount</td><td>text (INR)</td><td>computed server-side from items</td></tr>
+    <tr><td>rejectionReason</td><td>text</td><td>populated on reject</td></tr>
+    <tr><td>createdAt</td><td>timestamp</td><td></td></tr>
+    <tr><td>approvedAt</td><td>timestamp</td><td>set when admin approves; access expiry is computed from this</td></tr>
+  </tbody>
+</table>
+
+<h3>4.4 <code>order_items</code></h3>
+<table>
+  <thead>
+    <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>id</td><td>serial PK</td><td></td></tr>
+    <tr><td>orderId</td><td>integer FK</td><td></td></tr>
+    <tr><td>indicatorId</td><td>integer FK</td><td></td></tr>
+    <tr><td>duration</td><td>integer</td><td>months, 1–12 (ignored when <code>isTrial</code>)</td></tr>
+    <tr><td>price</td><td>text (INR)</td><td>server-recomputed at checkout</td></tr>
+    <tr><td>isTrial</td><td>boolean</td><td>trial flag (premium only, fixed price ₹5,250 / strategy = ×1.35)</td></tr>
+    <tr><td>version</td><td>text</td><td><code>"indicator"</code> or <code>"strategy"</code> (the "both" UI option produces two items)</td></tr>
+  </tbody>
+</table>
+
+<h3>4.5 <code>session</code> (managed by <code>connect-pg-simple</code>)</h3>
+<p>Created automatically by <code>express-session</code>. <strong>Do not run <code>npm run db:push</code>
+directly</strong> because it can drop the session table; if a schema sync is
+needed, use <code>npm run db:push --force</code> or alter the relevant table by hand.</p>
+
+<hr>
+
+<h2>5. Pricing Rules</h2>
+
+<h3>5.1 Version multipliers</h3>
+<p>Defined in <code>client/src/components/cart-provider.tsx</code> and mirrored on the
+server in <code>POST /api/orders</code>.</p>
+
+<table>
+  <thead>
+    <tr><th>Version</th><th>Price formula</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Indicator</td><td><code>indicator.price</code> (monthly)</td></tr>
+    <tr><td>Strategy</td><td><code>Math.round(indicator.price * 1.35)</code>; if free, ₹499</td></tr>
+    <tr><td>Both</td><td><code>Indicator + Strategy</code></td></tr>
+  </tbody>
+</table>
+
+<h3>5.2 Trial pricing (premium only)</h3>
+<p>Fixed ₹5,250 base; Strategy variant ×1.35; "Both" trial = ₹5,250 + ₹7,088.</p>
+
+<h3>5.3 Duration discounts</h3>
+<p>Applied in the pricing dialog (<code>client/src/pages/indicator-detail.tsx</code>,
+constant <code>DURATION_DISCOUNTS</code>) for the listed presets:</p>
+
+<table>
+  <thead>
+    <tr><th>Duration</th><th>Discount</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1 month</td><td>3%</td></tr>
+    <tr><td>3 months</td><td>6%</td></tr>
+    <tr><td>6 months</td><td>9%</td></tr>
+    <tr><td>9 months</td><td>12%</td></tr>
+    <tr><td>12 months</td><td>24%</td></tr>
+    <tr><td>Other</td><td>0%</td></tr>
+  </tbody>
+</table>
+
+<p>The pricing dialog shows the original price (strikethrough), the
+discounted price and the savings. The Final Price card mirrors the same
+math. <strong>The server currently charges <code>monthly × duration</code> without these
+discounts</strong> — keep the formulas in sync if you want them honored at
+checkout (see "Known Considerations").</p>
+
+<h3>5.4 Cart constraints</h3>
+<ul>
+  <li>Minimum duration: 1 month, maximum: 12 months.</li>
+  <li>All items in a cart must share the same <code>version</code> (Indicator / Strategy / Both).
+    The cart will refuse to add a mismatched item and prompt the user to
+    clear the cart.</li>
+  <li>One indicator can only appear once per cart.</li>
+</ul>
+
+<hr>
+
+<h2>6. Authentication &amp; Sessions</h2>
+
+<ul>
+  <li><strong>Email-first</strong>: the auth modal first calls
+    <code>GET /api/auth/check-email</code> to detect returning users. Returning users
+    see a confirmation step with their TradingView username pre-filled.</li>
+  <li><strong>No password</strong>: sign-up and sign-in are handled by a single endpoint
+    <code>POST /api/auth/signup-or-login</code> which creates a new user or logs in
+    an existing one.</li>
+  <li><strong>Sessions</strong>: <code>express-session</code> with <code>connect-pg-simple</code> persistence,
+    <code>httpOnly</code> cookies, signed with <code>SESSION_SECRET</code>.</li>
+  <li><strong>Admin bootstrap</strong>: at signup/login, if the user's email matches the
+    <code>ADMIN_EMAIL</code> env var, <code>isAdmin</code> is automatically set to true.</li>
+  <li><strong>Logout</strong>: <code>POST /api/auth/logout</code>.</li>
+  <li><strong>Profile update</strong>: <code>POST /api/auth/update</code> accepts the
+    <code>updateUserProfileSchema</code> (first/last name, mobile, TradingView username).</li>
+</ul>
+
+<hr>
+
+<h2>7. Pages</h2>
+
+<h3>7.1 <code>/</code> Home</h3>
+<p>File: <code>client/src/pages/home.tsx</code></p>
+<ul>
+  <li>Hero with call-to-action ("Explore Indicators", "Learn more").</li>
+  <li>Trust messaging, featured indicators preview, footer CTA.</li>
+</ul>
+
+<h3>7.2 <code>/indicators</code> Catalog</h3>
+<p>File: <code>client/src/pages/indicators.tsx</code></p>
+<ul>
+  <li>Hero + 3 trust badges (Non-Repainting / Proven Results / Easy to Use).</li>
+  <li>Tier tabs at top: <strong>All / Free / Premium</strong> (filters by <code>indicator.tier</code>).</li>
+  <li>A <strong>Filters</strong> popover (icon button with <code>SlidersHorizontal</code>) replaces the
+    legacy sidebar. It has two facets:
+    <ul>
+      <li><strong>Category</strong>: Scalping / Intraday / Swing / Positional. Selection
+        matches against <code>indicator.bestTimeframes</code> via regex
+        (e.g. Scalping ≈ 1m/3m/5m, Intraday ≈ 15m/30m/1H/4H, etc.).</li>
+      <li><strong>Markets</strong>: NIFTY / Forex / Crypto / Stocks / Commodities. Matches
+        against <code>indicator.markets</code>.</li>
+      <li>The trigger button shows a badge with the active filter count.</li>
+    </ul>
+  </li>
+  <li>Indicator cards (<code>indicator-card.tsx</code>):
+    <ul>
+      <li>Top right corner badge:
+        <ul>
+          <li><code>rating &gt;= 4.8</code> → blue <strong>Trending</strong></li>
+          <li><code>reviewCount &gt;= 80</code> → emerald <strong>Popular</strong></li>
+          <li><code>id % 5 === 0</code> → orange <strong>New</strong></li>
+        </ul>
+      </li>
+      <li>Synthetic candle preview chart, tier badge, name, short description.</li>
+      <li>Footer: rating + review count (left), "View Details →" (center),
+        bookmark icon (right) which toggles the indicator into the
+        <code>pinesignallab.watchlist</code> localStorage list and dispatches a
+        <code>watchlist-updated</code> event.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>7.3 <code>/indicator/:slug</code> Detail</h3>
+<p>File: <code>client/src/pages/indicator-detail.tsx</code></p>
+<ul>
+  <li>Header: breadcrumbs, name, short description, version + published date.</li>
+  <li>Stats strip: rating, reviews, win rate, RR, profit factor.</li>
+  <li>Action buttons: <strong>Get Access</strong> opens the pricing dialog;
+    <strong>Add to Watchlist</strong> toggles <code>pinesignallab.watchlist</code>.</li>
+  <li>Tabbed content: Overview / Quick Start / Reviews / FAQ.</li>
+  <li>A live-feel chart preview component renders synthetic candles.</li>
+  <li><strong>Pricing dialog</strong> (<code>Dialog</code> from shadcn):
+    <ul>
+      <li>Version selector: Indicator / Strategy / Indicator + Strategy.</li>
+      <li>Trial toggle in the dialog header.</li>
+      <li>Duration slider (1–12 months) with preset buttons (1, 3, 6, 9, 12).
+        Each preset displays the original total (struck through) and the
+        discounted total per the duration discount table.</li>
+      <li>Final Price card: shows original total, discounted total, "Save ₹X
+        (Y% off)" line.</li>
+      <li>Add-to-cart button (or "Go to Cart" if already in cart).</li>
+      <li><strong>15 Days Trial banner</strong> at the bottom: shows the trial price for
+        the currently selected version; clicking it switches the dialog
+        into trial mode.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>7.4 <code>/cart</code> Cart</h3>
+<p>File: <code>client/src/pages/cart.tsx</code></p>
+<ul>
+  <li>Lists each cart item: indicator name, version label, duration stepper,
+    price.</li>
+  <li>Trial items are read-only (fixed duration).</li>
+  <li>Shows a running total and a "Proceed to Checkout" button.</li>
+  <li>Empty state with CTA to browse the catalog.</li>
+</ul>
+
+<h3>7.5 <code>/checkout</code> Checkout</h3>
+<p>File: <code>client/src/pages/checkout.tsx</code></p>
+<ul>
+  <li>If logged out, opens the auth modal first.</li>
+  <li>Collects/confirms profile fields used for delivery
+    (first/last name, mobile, TradingView username).</li>
+  <li>Submits cart to <code>POST /api/orders</code>. The server re-validates each
+    item's price (anti-tampering) and writes one row per item.</li>
+  <li>On success: clears cart and routes to <code>/dashboard</code>.</li>
+</ul>
+
+<h3>7.6 <code>/dashboard</code> Customer Dashboard</h3>
+<p>File: <code>client/src/pages/dashboard.tsx</code></p>
+<ul>
+  <li>Greeting with first name.</li>
+  <li><strong>Stat cards (also act as filter tabs)</strong>:
+    <ul>
+      <li>Active Indicators (count of items with <code>accessStatus === "active"</code>)</li>
+      <li>Pending Requests (count of items with <code>accessStatus === "pending"</code>)</li>
+      <li>Total Orders (count of orders)</li>
+      <li>Saved Indicators (size of <code>pinesignallab.watchlist</code> resolved against
+        <code>/api/indicators</code>)</li>
+    </ul>
+  </li>
+  <li>Selecting a card filters the detail panel to only that section.</li>
+  <li>Sections:
+    <ul>
+      <li><strong>Active Indicators</strong> — grid of cards showing indicator name, tier
+        badge, days remaining (or "Lifetime" if no <code>approvedAt</code> recorded).</li>
+      <li><strong>Pending Requests</strong> — list of pending items. If the parent order is
+        older than <strong>24 hours</strong>, the card displays a "Contact Support Team"
+        button that opens WhatsApp (<code>https://wa.me/918920167711</code>) with a
+        pre-filled message containing the order id and indicator name.</li>
+      <li><strong>Saved Indicators</strong> — bookmark list (synced via <code>storage</code> and
+        <code>watchlist-updated</code> events).</li>
+      <li><strong>Order History</strong> — every order with status badge and total. Each
+        item row links to its indicator. Rejected orders show the rejection
+        reason and a "Contact Support Team" WhatsApp button. Pending orders
+        older than 24 hours show the same support strip.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>7.7 <code>/support</code> Help &amp; Support</h3>
+<p>File: <code>client/src/pages/support.tsx</code></p>
+<ul>
+  <li>Hero, three contact cards (Email, WhatsApp, Onboarding).</li>
+  <li>5-question FAQ accordion (access, trial, version switching, refunds,
+    supported markets).</li>
+  <li>Frontend-only contact form (name, email, subject, message) with toast
+    confirmation. <strong>Wire to a real channel before launch.</strong></li>
+</ul>
+
+<h3>7.8 <code>/about</code> About Pine Signal Lab</h3>
+<p>File: <code>client/src/pages/about.tsx</code></p>
+<ul>
+  <li>Hero, stats strip (10K+ Active Traders, 50+ Indicators, 24/7 Support,
+    100% Non-Repainting), Mission / How-we-build cards, four "What we
+    stand for" pillars, CTA back to <code>/indicators</code>.</li>
+</ul>
+
+<h3>7.9 <code>/admin</code> Admin (gated)</h3>
+<p>Files: <code>client/src/pages/admin.tsx</code>, <code>client/src/components/admin/*</code></p>
+
+<p>Visible only when <code>user.isAdmin === true</code>. Sidebar with three sections:</p>
+
+<ol>
+  <li><strong>User Management Dashboard</strong> (<code>admin-dashboard.tsx</code>)
+    <ul>
+      <li>Tabs: All / Active / Pending / Free.</li>
+      <li>Search, sort, and a slide-in detail panel.</li>
+      <li>Per-user view of orders, total spent, approve/reject controls.</li>
+      <li>Reject dialog requires a reason; that reason appears on the
+        customer dashboard.</li>
+    </ul>
+  </li>
+  <li><strong>Indicator Editor</strong> (<code>admin-editor.tsx</code>)
+    <ul>
+      <li>CRUD for <code>indicators</code> (create, edit, delete). Lists existing items;
+        editor handles all the long-form fields, FAQs, markets,
+        timeframes, etc.</li>
+    </ul>
+  </li>
+  <li><strong>Analytics</strong> (<code>admin-analytics.tsx</code>)
+    <ul>
+      <li>Aggregate KPIs from <code>GET /api/admin/analytics</code>.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr>
+
+<h2>8. REST API</h2>
+
+<p>All endpoints return JSON. Mutations expect a JSON body. Cookies carry
+the session.</p>
+
+<h3>8.1 Public</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/indicators</code></td><td>List all indicators</td></tr>
+    <tr><td>GET</td><td><code>/api/indicators/:slug</code></td><td>Single indicator (404 if missing)</td></tr>
+    <tr><td>GET</td><td><code>/api/auth/check-email</code></td><td><code>?email=</code> returns <code>{exists, user?}</code></td></tr>
+    <tr><td>POST</td><td><code>/api/auth/signup-or-login</code></td><td>Body validated by <code>insertUserSchema</code>; sets session cookie. Returns <code>{user, isNewUser}</code></td></tr>
+  </tbody>
+</table>
+
+<h3>8.2 Authenticated (session required)</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/auth/me</code></td><td>Current user (401 if no session)</td></tr>
+    <tr><td>POST</td><td><code>/api/auth/update</code></td><td>Update profile (<code>updateUserProfileSchema</code>)</td></tr>
+    <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>Destroys session</td></tr>
+    <tr><td>GET</td><td><code>/api/access/:indicatorId</code></td><td><code>{hasAccess: boolean}</code> — true while an approved order's <code>approvedAt + duration months</code> is in the future</td></tr>
+    <tr><td>GET</td><td><code>/api/dashboard</code></td><td>All of the user's orders with item details and computed <code>accessStatus</code> (<code>pending</code>/<code>active</code>/<code>expired</code>/<code>rejected</code>) and <code>daysRemaining</code></td></tr>
+    <tr><td>POST</td><td><code>/api/orders</code></td><td>Create a new order from a cart payload. Server re-validates prices, writes one <code>order_items</code> row per cart item; returns the order</td></tr>
+  </tbody>
+</table>
+
+<h3>8.3 Admin (session + <code>isAdmin === true</code>)</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/admin/users</code></td><td>All users with aggregated stats</td></tr>
+    <tr><td>GET</td><td><code>/api/admin/analytics</code></td><td>KPIs</td></tr>
+    <tr><td>POST</td><td><code>/api/admin/orders/:id/approve</code></td><td>Approve an order; sets <code>approvedAt = now()</code></td></tr>
+    <tr><td>POST</td><td><code>/api/admin/orders/:id/reject</code></td><td>Body <code>{reason}</code>; sets status <code>rejected</code></td></tr>
+    <tr><td>POST</td><td><code>/api/admin/indicators</code></td><td>Create indicator</td></tr>
+    <tr><td>PATCH</td><td><code>/api/admin/indicators/:id</code></td><td>Update indicator</td></tr>
+    <tr><td>DELETE</td><td><code>/api/admin/indicators/:id</code></td><td>Delete indicator</td></tr>
+  </tbody>
+</table>
+
+<p>The admin guard middleware lives in <code>server/routes.ts</code> (<code>requireAdmin</code>).</p>
+
+<h3>8.4 Order item <code>accessStatus</code></h3>
+<p>Computed in <code>GET /api/dashboard</code>:</p>
+<ul>
+  <li><code>rejected</code> — parent order rejected</li>
+  <li><code>pending</code> — parent order still pending</li>
+  <li><code>active</code> — order approved AND <code>approvedAt + duration months</code> is in the future (or no <code>approvedAt</code> recorded → treated as lifetime)</li>
+  <li><code>expired</code> — order approved but the computed window has passed</li>
+</ul>
+
+<p><code>daysRemaining</code> is <code>null</code> for lifetime/no-expiry items.</p>
+
+<hr>
+
+<h2>9. Frontend Patterns</h2>
+
+<ul>
+  <li><strong>TanStack Query v5</strong> is the default data layer. <code>queryClient</code> lives in
+    <code>client/src/lib/queryClient.ts</code>. The default <code>queryFn</code> reads the URL
+    from <code>queryKey[0]</code>, so most queries are written as
+    <code>useQuery({ queryKey: ["/api/foo", id] })</code>. Mutations use <code>apiRequest</code>
+    and must invalidate the relevant <code>queryKey</code>.</li>
+  <li><strong>Forms</strong> use <code>useForm</code> + <code>zodResolver</code> against the <code>insertUserSchema</code>
+    (or other shared zod schemas) and the <code>&lt;Form&gt;</code> wrapper from
+    <code>components/ui/form.tsx</code>.</li>
+  <li><strong>Routing</strong> uses <code>wouter</code>. All routes are registered in <code>App.tsx</code>
+    inside <code>&lt;Switch&gt;</code>; new pages must be added there.</li>
+  <li><strong>Dark mode</strong>: a <code>class="dark"</code> toggle on <code>documentElement</code>; theme
+    state is persisted in <code>localStorage</code> by <code>theme-toggle.tsx</code>. Tailwind
+    config sets <code>darkMode: ["class"]</code> and the CSS vars in <code>index.css</code>
+    define both palettes (HSL components only, no <code>hsl()</code> wrapper).</li>
+  <li><strong>Test IDs</strong>: every interactive element and meaningful display element
+    has a <code>data-testid</code> (pattern: <code>action-target</code> or <code>type-content</code>, with
+    a stable id suffix on dynamic items). This convention is enforced for
+    testability.</li>
+</ul>
+
+<hr>
+
+<h2>10. Local Storage Keys</h2>
+
+<table>
+  <thead>
+    <tr><th>Key</th><th>Owner</th><th>Shape</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>cart</code></td><td><code>cart-provider.tsx</code></td><td><code>CartItem[]</code></td></tr>
+    <tr><td><code>pinesignallab.watchlist</code></td><td><code>indicator-card.tsx</code>, <code>indicator-detail.tsx</code>, <code>dashboard.tsx</code></td><td><code>number[]</code> (indicator IDs)</td></tr>
+    <tr><td><code>theme</code></td><td><code>theme-toggle.tsx</code></td><td><code>"light"</code> / <code>"dark"</code></td></tr>
+  </tbody>
+</table>
+
+<p>Custom events:</p>
+<ul>
+  <li><code>watchlist-updated</code> — dispatched on <code>window</code> whenever the watchlist
+    changes; listeners (catalog, dashboard) re-read from localStorage.</li>
+  <li><code>cart-item-added</code> — used by the navbar to bounce the cart icon.</li>
+</ul>
+
+<hr>
+
+<h2>11. Environment &amp; Configuration</h2>
+
+<table>
+  <thead>
+    <tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>DATABASE_URL</code></td><td>yes</td><td>Postgres connection string. Provided by Replit.</td></tr>
+    <tr><td><code>SESSION_SECRET</code></td><td>yes</td><td>Cookie signing secret for <code>express-session</code>.</td></tr>
+    <tr><td><code>ADMIN_EMAIL</code></td><td>optional</td><td>Email that should be auto-promoted to <code>isAdmin = true</code> on first login.</td></tr>
+  </tbody>
+</table>
+
+<p>Secrets must be managed through the platform's secret store, never
+committed.</p>
+
+<hr>
+
+<h2>12. Running &amp; Deployment</h2>
+
+<ul>
+  <li><strong>Dev</strong>: workflow <code>Start application</code> runs <code>npm run dev</code>, which boots
+    Express and Vite together on a single port. Editing source files
+    triggers HMR.</li>
+  <li><strong>Build</strong>: <code>npm run build</code> produces a Vite client bundle and an
+    Express server bundle. <code>npm start</code> serves the production build.</li>
+  <li><strong>DB sync</strong>: <code>npm run db:push</code> (use <code>--force</code> if it warns). Avoid
+    destructive runs that drop the <code>session</code> table.</li>
+  <li><strong>Deploy</strong>: standard Replit deployment. The deployed app uses the
+    production database; verify <code>ADMIN_EMAIL</code> and <code>SESSION_SECRET</code> are set
+    in the production environment.</li>
+</ul>
+
+<hr>
+
+<h2>13. Support &amp; Contact Channels</h2>
+
+<p>These are surfaced in the Help &amp; Support page and on the dashboard
+support buttons. Update centrally if they change.</p>
+
+<ul>
+  <li><strong>Email</strong>: support@pinesignallab.in</li>
+  <li><strong>WhatsApp</strong>: +91 89201 67711 (used in <code>dashboard.tsx</code> as
+    <code>https://wa.me/918920167711</code> with a pre-filled message)</li>
+  <li><strong>Hours</strong>: Mon–Sat, 10 AM – 7 PM IST</li>
+</ul>
+
+<hr>
+
+<h2>14. Known Considerations / Follow-ups</h2>
+
+<ol>
+  <li><strong>Discount enforcement on the server</strong>: the duration discounts
+    (3 / 6 / 9 / 12 / 24 %) are applied client-side in the pricing
+    dialog. <code>POST /api/orders</code> currently re-prices items as
+    <code>monthly × duration</code> without the discount, so the customer ends up
+    paying the un-discounted total. To honor discounts at checkout, port
+    <code>DURATION_DISCOUNTS</code> from <code>indicator-detail.tsx</code> into <code>routes.ts</code>
+    and apply it in the price-recompute loop.</li>
+  <li><strong>Trial display vs schema</strong>: the schema default for
+    <code>indicators.trialDays</code> is 7, but the UI always speaks of a "15 Days
+    Trial". Either backfill <code>trialDays = 15</code> in the seeder or change the
+    UI copy to read the real value.</li>
+  <li><strong>Support form</strong>: the contact form on <code>/support</code> only shows a toast.
+    Wire it to an email service or ticketing system before launch.</li>
+  <li><strong>Hard-coded contact details</strong>: WhatsApp number and email are
+    inlined; consider extracting to a small <code>lib/contact.ts</code> so they can
+    be updated in one place.</li>
+  <li><strong>Payments</strong>: there is no payment gateway integration today. Orders
+    move from <code>pending</code> → <code>approved</code> purely through admin review. If
+    you wire Razorpay / Stripe, add a <code>paymentStatus</code> column on
+    <code>orders</code> and verify it before allowing approval.</li>
+  <li><strong>Tests</strong>: there is no automated test suite checked in. Component
+    <code>data-testid</code>s are in place to make Playwright/RTL coverage easy to
+    add.</li>
+</ol>
+
+<hr>
+
+<h2>15. Glossary</h2>
+
+<ul>
+  <li><strong>Indicator</strong>: a visual TradingView script that draws signals on the
+    chart but does not auto-trade.</li>
+  <li><strong>Strategy</strong>: the executable variant of an indicator that triggers
+    alerts/orders. Priced at 1.35× the indicator base price (₹499 floor
+    for free-tier strategies).</li>
+  <li><strong>Trial</strong>: a 15-day, fixed-price (₹5,250 base) preview of a premium
+    indicator/strategy.</li>
+  <li><strong>Tier</strong>: <code>free</code> or <code>premium</code>. Free indicators have <code>price = "0"</code>.</li>
+  <li><strong>Access</strong>: the period during which an approved subscription grants
+    the user invite-only access to the script on TradingView. Computed
+    from <code>approvedAt + duration months</code>.</li>
+</ul>
+
+</body>
+</html>
