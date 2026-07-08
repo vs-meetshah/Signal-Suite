@@ -9,6 +9,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { Navbar } from "@/components/navbar";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import ProfilePage from "@/pages/profile";
 import IndicatorsPage from "@/pages/indicators";
 import IndicatorDetail from "@/pages/indicator-detail";
 import CartPage from "@/pages/cart";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/profile" component={ProfilePage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/support" component={SupportPage} />
       <Route path="/about" component={AboutPage} />

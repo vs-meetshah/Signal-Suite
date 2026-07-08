@@ -151,7 +151,7 @@ function readWatchlist(): number[] {
 function writeWatchlist(ids: number[]) {
   try {
     window.localStorage.setItem(WATCHLIST_KEY, JSON.stringify(ids));
-  } catch {}
+  } catch { }
 }
 
 export default function IndicatorDetail() {
@@ -234,17 +234,25 @@ export default function IndicatorDetail() {
         toast({
           variant: "destructive",
           title: "Can't mix versions",
-          description: `Your cart already has ${VERSION_LABELS[result.cartVersion as ProductVersion] || "items"}. Clear your cart or check out first.`,
+          description: `This indicator is already in your cart as ${VERSION_LABELS[result.cartVersion as ProductVersion] || "selected version"}. Remove it from cart first if you want to change the version.`,
         });
         return;
       }
       if (!result.ok && result.reason === "exists") {
-        toast({ variant: "destructive", title: "Already in cart", description: `${indicator.name} is already in your cart.` });
+        toast({
+          variant: "destructive",
+          title: "Already in cart",
+          description: `${indicator.name} is already in your cart. Remove it from cart first if you want to change the plan or duration.`,
+        });
         return;
       }
       window.dispatchEvent(new CustomEvent("cart-item-added"));
-      toast({ title: "Trial added", description: `${indicator.name} (${VERSION_LABELS[dialogVersion]}) trial has been added to your cart.` });
+      toast({
+        title: "Trial added",
+        description: `${indicator.name} (${VERSION_LABELS[dialogVersion]}) trial has been added to your cart.`,
+      });
       setPricingOpen(false);
+      setLocation("/cart");
       return;
     }
     const monthlyPrice = computeVersionPrice(dialogVersion, indicatorVersionPrice);
@@ -260,12 +268,16 @@ export default function IndicatorDetail() {
       toast({
         variant: "destructive",
         title: "Can't mix versions",
-        description: `Your cart already has ${VERSION_LABELS[result.cartVersion as ProductVersion] || "items"}. Clear your cart or check out first.`,
+        description: `This indicator is already in your cart as ${VERSION_LABELS[result.cartVersion as ProductVersion] || "selected version"}. Remove it from cart first if you want to change the version.`,
       });
       return;
     }
     if (!result.ok && result.reason === "exists") {
-      toast({ variant: "destructive", title: "Already in cart", description: `${indicator.name} is already in your cart.` });
+      toast({
+        variant: "destructive",
+        title: "Already in cart",
+        description: `${indicator.name} is already in your cart. Remove it from cart first if you want to change the plan or duration.`,
+      });
       return;
     }
     window.dispatchEvent(new CustomEvent("cart-item-added"));
@@ -274,6 +286,7 @@ export default function IndicatorDetail() {
       description: `${indicator.name} (${VERSION_LABELS[dialogVersion]}) · ${dialogMonths} ${dialogMonths === 1 ? "month" : "months"} added to your cart.`,
     });
     setPricingOpen(false);
+    setLocation("/cart");
   };
 
   const openPricing = () => {
@@ -303,9 +316,9 @@ export default function IndicatorDetail() {
 
   const settingsBlocks = indicator.recommendedSettings
     ? indicator.recommendedSettings.split("\n").map((b) => {
-        const i = b.indexOf(":");
-        return i === -1 ? { title: b, detail: "" } : { title: b.slice(0, i).trim(), detail: b.slice(i + 1).trim() };
-      })
+      const i = b.indexOf(":");
+      return i === -1 ? { title: b, detail: "" } : { title: b.slice(0, i).trim(), detail: b.slice(i + 1).trim() };
+    })
     : [];
 
   return (
@@ -862,7 +875,10 @@ export default function IndicatorDetail() {
 
       {/* Pricing Dialog */}
       <Dialog open={pricingOpen} onOpenChange={setPricingOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden" data-testid="dialog-pricing">
+        <DialogContent
+          className="max-h-[92vh] w-[calc(100vw-1rem)] max-w-md overflow-y-auto p-0 sm:w-full"
+          data-testid="dialog-pricing"
+        >
           <div className="p-5">
             <DialogHeader className="mb-4 flex-row items-center justify-between space-y-0">
               <DialogTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -909,12 +925,11 @@ export default function IndicatorDetail() {
                   <Label
                     key={key}
                     htmlFor={inputId}
-                    className={`block w-full cursor-pointer rounded-lg border p-3 font-normal transition-all hover-elevate ${
-                      active ? "border-primary/60 bg-primary/[0.04]" : "border-card-border"
-                    }`}
+                    className={`block w-full cursor-pointer rounded-lg border p-3 font-normal transition-all hover-elevate ${active ? "border-primary/60 bg-primary/[0.04]" : "border-card-border"
+                      }`}
                     data-testid={testId}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-3 sm:items-center">
                       <div className="flex items-center gap-2">
                         <VIcon className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
                         <div>
@@ -922,7 +937,7 @@ export default function IndicatorDetail() {
                           <p className="mt-1 text-[11px] text-muted-foreground">{tagline}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         <div className="text-right">
                           {isFreePrice ? (
                             <span className="text-sm font-bold text-emerald-500" data-testid={`text-dialog-price-${key}`}>Free</span>
@@ -965,7 +980,7 @@ export default function IndicatorDetail() {
                   onValueChange={(v) => setDialogMonths(v[0] ?? 1)}
                   data-testid="slider-dialog-months"
                 />
-                <div className="mt-3 grid grid-cols-5 gap-1.5">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   {[1, 3, 6, 9, 12].map((m) => {
                     const monthly = parseFloat(computeVersionPrice(dialogVersion, indicatorVersionPrice));
                     const original = monthly * m;
@@ -977,9 +992,10 @@ export default function IndicatorDetail() {
                         key={m}
                         type="button"
                         onClick={() => setDialogMonths(m)}
-                        className={`relative flex flex-col items-center justify-center rounded-md border px-1.5 py-2 transition-colors hover-elevate ${
-                          active ? "border-primary/60 bg-primary/[0.06] text-foreground" : "border-card-border text-muted-foreground"
-                        }`}
+                        className={`relative flex min-h-[64px] flex-col items-center justify-center rounded-md border px-2 py-2 transition-colors hover-elevate sm:min-h-[72px] ${active
+                          ? "border-primary/60 bg-primary/[0.06] text-foreground"
+                          : "border-card-border text-muted-foreground"
+                          }`}
                         data-testid={`button-dialog-months-${m}`}
                       >
                         {discount > 0 && (
@@ -1011,7 +1027,7 @@ export default function IndicatorDetail() {
 
             {/* Final price */}
             <div className="mt-5 rounded-lg border border-card-border bg-muted/30 p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Final Price</p>
                   <p className="mt-1 text-[11px] text-muted-foreground">
@@ -1055,7 +1071,7 @@ export default function IndicatorDetail() {
               <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2.5" data-testid="alert-dialog-mixed">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
                 <p className="text-[11.5px] leading-snug text-amber-600 dark:text-amber-300">
-                  Cart already has <span className="font-semibold">{VERSION_LABELS[cartVersion as ProductVersion]}</span>. Clear cart or check out first.
+                  This indicator is already in your cart. Remove it from cart first if you want to change the version.
                 </p>
               </div>
             )}
@@ -1063,13 +1079,13 @@ export default function IndicatorDetail() {
             <div className="mt-4 space-y-2">
               {inCart ? (
                 <Link href="/cart">
-                  <Button className="w-full" size="lg" data-testid="button-dialog-go-cart">
+                  <Button className="h-11 w-full rounded-lg text-sm font-semibold sm:h-12 sm:text-base" size="lg" data-testid="button-dialog-go-cart">
                     <ShoppingCart className="mr-2 h-4 w-4" /> Go to Cart
                   </Button>
                 </Link>
               ) : (
                 <Button
-                  className="w-full"
+                  className="h-11 w-full rounded-lg text-sm font-semibold sm:h-12 sm:text-base"
                   size="lg"
                   onClick={handleAddFromDialog}
                   disabled={!canAddVersion(dialogVersion)}
@@ -1079,8 +1095,8 @@ export default function IndicatorDetail() {
                   {dialogIsTrial
                     ? `Start ${indicator.trialDays || 15}-Day Trial`
                     : parseFloat(computeVersionPrice(dialogVersion, indicatorVersionPrice)) === 0
-                    ? "Get Free Access"
-                    : `Add to Cart · ${VERSION_LABELS[dialogVersion]}`}
+                      ? "Get Free Access"
+                      : `Add to Cart · ${VERSION_LABELS[dialogVersion]}`}
                 </Button>
               )}
             </div>
@@ -1094,7 +1110,7 @@ export default function IndicatorDetail() {
                 <button
                   type="button"
                   onClick={() => setDialogIsTrial(true)}
-                  className="flex w-full items-center justify-between gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-left transition-colors hover-elevate"
+                  className="flex w-full flex-col gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-left transition-colors hover-elevate sm:flex-row sm:items-center sm:justify-between"
                   data-testid="banner-trial-offer"
                 >
                   <div className="flex items-start gap-2">

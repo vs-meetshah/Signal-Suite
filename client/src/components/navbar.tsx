@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, TrendingUp, Menu, X, LogOut, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { ShoppingCart, TrendingUp, Menu, X, LogOut, LayoutDashboard, ShieldCheck, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,14 @@ import { useCart } from "@/components/cart-provider";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect } from "react";
 import { motion, useAnimation } from "framer-motion";
+
+const isActiveNav = (location: string, href: string) => {
+  if (href === "/") return location === "/";
+  if (href === "/indicators") {
+    return location === "/indicators" || location.startsWith("/indicator/");
+  }
+  return location === href || location.startsWith(`${href}/`);
+};
 
 export function Navbar() {
   const { itemCount } = useCart();
@@ -36,8 +44,12 @@ export function Navbar() {
   }, [cartControls]);
 
   const navLinks = [
-    { href: "/", label: "Home" },
-    ...(user ? [{ href: "/dashboard", label: "Dashboard" }] : []),
+    ...(!user ? [{ href: "/", label: "Home" }] : []),
+    ...(user?.isAdmin
+      ? [{ href: "/admin", label: "Admin Panel" }]
+      : user
+        ? [{ href: "/dashboard", label: "Dashboard" }]
+        : []),
     { href: "/indicators", label: "Indicators & Strategies" },
     { href: "/support", label: "Help & Support" },
     { href: "/about", label: "About" },
@@ -64,7 +76,12 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={location === link.href ? "text-foreground" : "text-muted-foreground"}
+                  className={
+                    isActiveNav(location, link.href)
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }
+                  aria-current={isActiveNav(location, link.href) ? "page" : undefined}
                   data-testid={`link-nav-${link.label.toLowerCase()}`}
                 >
                   {link.label}
@@ -77,15 +94,21 @@ export function Navbar() {
             <ThemeToggle />
             <Link href="/cart">
               <motion.div animate={cartControls}>
-                <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative mr-1 rounded-full"
+                  data-testid="button-cart"
+                >
                   <ShoppingCart className="h-4 w-4" />
+
                   {itemCount > 0 && (
-                    <Badge
-                      variant="default"
-                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px]"
+                    <span
+                      className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground shadow-sm ring-2 ring-background"
+                      data-testid="badge-cart-count"
                     >
-                      {itemCount}
-                    </Badge>
+                      {itemCount > 9 ? "9+" : itemCount}
+                    </span>
                   )}
                 </Button>
               </motion.div>
@@ -124,6 +147,14 @@ export function Navbar() {
                     </p>
                   </div>
                   <DropdownMenuSeparator />
+
+                  <Link href="/profile">
+                    <DropdownMenuItem data-testid="link-profile">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      My Profile
+                    </DropdownMenuItem>
+                  </Link>
+
                   <Link href="/dashboard">
                     <DropdownMenuItem data-testid="link-dashboard">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -170,8 +201,13 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start"
-                  data-testid={`link-mobile-${link.label.toLowerCase()}`}
+                  className={
+                    isActiveNav(location, link.href)
+                      ? "w-full justify-start bg-primary/10 text-primary"
+                      : "w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }
+                  aria-current={isActiveNav(location, link.href) ? "page" : undefined}
+                  data-testid={`link-mobile-${link.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                 >
                   {link.label}
                 </Button>

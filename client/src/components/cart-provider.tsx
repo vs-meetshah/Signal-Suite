@@ -75,13 +75,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const evaluateAdd = (prev: CartItem[], indicatorId: number, version: ProductVersion): AddResult => {
-    if (prev.some((i) => i.indicatorId === indicatorId)) {
-      return { ok: false, reason: "exists" };
+    const existingItem = prev.find((i) => i.indicatorId === indicatorId);
+
+    if (existingItem) {
+      return { ok: false, reason: "exists", cartVersion: existingItem.version };
     }
-    const existingVersion = prev[0]?.version;
-    if (existingVersion && existingVersion !== version) {
-      return { ok: false, reason: "mixed", cartVersion: existingVersion };
-    }
+
     return { ok: true };
   };
 
@@ -146,8 +145,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const cartVersion: ProductVersion | null = items.length > 0 ? items[0].version : null;
 
   const canAddVersion = useCallback(
-    (version: ProductVersion) => cartVersion === null || cartVersion === version,
-    [cartVersion]
+    (_version: ProductVersion) => true,
+    []
   );
 
   return (

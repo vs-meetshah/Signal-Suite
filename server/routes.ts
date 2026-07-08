@@ -52,7 +52,7 @@ export async function registerRoutes(
     }
     const user = await storage.getUserById(req.session.userId);
     if (!user) {
-      req.session.destroy(() => {});
+      req.session.destroy(() => { });
       return res.status(401).json({ message: "User not found" });
     }
     res.json(user);
@@ -153,10 +153,10 @@ export async function registerRoutes(
         )
           ? "paid"
           : ordersWithItems.some((o) => o.items.some((it) => it.accessStatus === "active" && it.isTrial))
-          ? "trial"
-          : ordersWithItems.some((o) => o.items.some((it) => it.accessStatus === "active" && it.indicatorTier === "free"))
-          ? "free"
-          : "none";
+            ? "trial"
+            : ordersWithItems.some((o) => o.items.some((it) => it.accessStatus === "active" && it.indicatorTier === "free"))
+              ? "free"
+              : "none";
 
         const maxDays = ordersWithItems
           .flatMap((o) => o.items.map((it) => it.daysRemaining))
@@ -596,7 +596,7 @@ export async function registerRoutes(
   });
 
   app.post("/api/auth/logout", async (req, res) => {
-    req.session.destroy(() => {});
+    req.session.destroy(() => { });
     res.json({ message: "Logged out" });
   });
 
@@ -653,6 +653,15 @@ export async function registerRoutes(
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    const user = await storage.getUserById(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (user.isAdmin) {
+      return res.status(403).json({ message: "Admins cannot place orders" });
+    }
+
     const { items } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -670,19 +679,36 @@ export async function registerRoutes(
 
       const duration = Math.max(1, Math.min(12, parseInt(item.duration) || 1));
       const isTrial = item.isTrial === true && indicator.tier === "premium";
-      const version: "indicator" | "strategy" = item.version === "strategy" ? "strategy" : "indicator";
+
+      const version: "indicator" | "strategy" | "both" =
+        item.version === "strategy"
+          ? "strategy"
+          : item.version === "both"
+            ? "both"
+            : "indicator";
 
       const indicatorBase = parseFloat(indicator.price);
+      const strategyBase =
+        indicatorBase === 0 ? 499 : Math.round(indicatorBase * 1.35);
+
       const baseUnit =
         version === "strategy"
-          ? indicatorBase === 0
-            ? 499
-            : Math.round(indicatorBase * 1.35)
-          : indicatorBase;
+          ? strategyBase
+          : version === "both"
+            ? indicatorBase + strategyBase
+            : indicatorBase;
 
       let price: string;
       if (isTrial) {
-        price = version === "strategy" ? Math.round(5250 * 1.35).toFixed(2) : "5250";
+        const trialIndicator = 5250;
+        const trialStrategy = Math.round(5250 * 1.35);
+
+        price =
+          version === "strategy"
+            ? trialStrategy.toFixed(2)
+            : version === "both"
+              ? (trialIndicator + trialStrategy).toFixed(2)
+              : trialIndicator.toFixed(2);
       } else {
         price = (baseUnit * duration).toFixed(2);
       }
