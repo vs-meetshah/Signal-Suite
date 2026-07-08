@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LayoutDashboard } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -265,23 +266,20 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl" data-testid="text-dashboard-title">
             Dashboard
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Welcome back, {user.firstName}. Here's an overview of your account.
+            Welcome back, {user.firstName}. Track your indicator access, approvals, and subscriptions.
           </p>
         </div>
 
         <div className="space-y-6">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             <h2 className="text-xl font-semibold" data-testid="text-orders-heading">
               My Orders
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Your subscriptions, access status, and order history are shown below.
-            </p>
           </div>
 
           <div className="min-w-0">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import {
@@ -168,6 +168,8 @@ export default function IndicatorDetail() {
   const [dialogVersion, setDialogVersion] = useState<ProductVersion>("indicator");
   const [dialogMonths, setDialogMonths] = useState<number>(1);
   const [dialogIsTrial, setDialogIsTrial] = useState<boolean>(false);
+  const pricingDialogRef = useRef<HTMLDivElement | null>(null);
+  const pricingScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { data: indicator, isLoading } = useQuery<Indicator>({
     queryKey: ["/api/indicators", params.slug],
@@ -177,8 +179,23 @@ export default function IndicatorDetail() {
     queryKey: ["/api/access", indicator?.id],
     enabled: !!indicator?.id,
   });
+
+  useEffect(() => {
+    if (!pricingOpen) return;
+
+    const resetScroll = () => {
+      pricingDialogRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      pricingScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    };
+
+    resetScroll();
+    const frame = window.requestAnimationFrame(resetScroll);
+    return () => window.cancelAnimationFrame(frame);
+  }, [pricingOpen]);
+
   const hasAccess = access?.hasAccess === true;
   const lockMessage = "Unlocks automatically once your purchase is approved.";
+  const canViewProtectedContent = hasAccess || isAdmin;
 
   if (isLoading) {
     return (
@@ -570,8 +587,10 @@ export default function IndicatorDetail() {
                     <div className="space-y-6 lg:col-span-5">
                       {(() => {
                         const url = indicator.videoUrl || "";
+                        const imageUrl = indicator.imageUrl || "";
                         const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/);
                         const hasVideo = Boolean(yt || url);
+                        const hasImage = Boolean(imageUrl);
                         return (
                           <Card className="relative border-card-border overflow-hidden p-0" data-testid="card-video-tutorial">
                             {isAdmin && (
@@ -596,6 +615,14 @@ export default function IndicatorDetail() {
                                   className="absolute inset-0 h-full w-full object-cover"
                                   src={url}
                                   data-testid="video-tutorial"
+                                />
+                              ) : hasImage ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={`${indicator.name} preview`}
+                                  className="absolute inset-0 h-full w-full object-cover"
+                                  loading="lazy"
+                                  data-testid="image-video-cover"
                                 />
                               ) : (
                                 <>
@@ -705,7 +732,7 @@ export default function IndicatorDetail() {
                         {isAdmin && <SectionEditButton indicator={indicator} section="signalLogic" />}
                       </div>
                       {indicator.signalLogic ? (
-                        hasAccess ? <TextBlock content={indicator.signalLogic} /> : <LockedBlock message={lockMessage} />
+                        canViewProtectedContent ? <TextBlock content={indicator.signalLogic} /> : <LockedBlock message={lockMessage} />
                       ) : (
                         <p className="text-sm text-muted-foreground italic" data-testid="signal-logic-empty">
                           No signal logic added yet. Click Edit to add one.
@@ -722,7 +749,7 @@ export default function IndicatorDetail() {
                           <SectionEditButton indicator={indicator} section="entryExit" label="Edit Entry/Exit" />
                         </div>
                       )}
-                      {hasAccess ? (
+                      {canViewProtectedContent ? (
                         (indicator.entryConditions || indicator.exitConditions) ? (
                           <div className="grid gap-4 md:grid-cols-2">
                             {indicator.entryConditions && (
@@ -763,7 +790,7 @@ export default function IndicatorDetail() {
                           <SectionEditButton indicator={indicator} section="riskMgmt" label="Edit Risk Mgmt" />
                         </div>
                       )}
-                      {hasAccess ? (
+                      {canViewProtectedContent ? (
                         (indicator.stopLossStrategy || indicator.targetStrategy) ? (
                           <div className="grid gap-4 md:grid-cols-2">
                             {indicator.stopLossStrategy && (
@@ -876,209 +903,249 @@ export default function IndicatorDetail() {
       {/* Pricing Dialog */}
       <Dialog open={pricingOpen} onOpenChange={setPricingOpen}>
         <DialogContent
-          className="max-h-[92vh] w-[calc(100vw-1rem)] max-w-md overflow-y-auto p-0 sm:w-full"
+          ref={pricingDialogRef}
+          className="fixed left-1/2 top-4 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-1rem)] max-w-md -translate-x-1/2 translate-y-0 flex-col overflow-hidden p-0 sm:top-1/2 sm:max-h-[92vh] sm:w-full sm:-translate-y-1/2"
+          onOpenAutoFocus={(event) => event.preventDefault()}
           data-testid="dialog-pricing"
         >
-          <div className="p-5">
-            <DialogHeader className="mb-4 flex-row items-center justify-between space-y-0">
-              <DialogTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Pricing
-              </DialogTitle>
-              {!isFree && (
-                <div className="flex items-center gap-2">
-                  <Label
-                    htmlFor="switch-toggle-trial"
-                    className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground cursor-pointer"
-                  >
-                    <Clock className="h-3 w-3" /> {indicator.trialDays || 15}-day trial
-                  </Label>
-                  <Switch
-                    id="switch-toggle-trial"
-                    checked={dialogIsTrial}
-                    onCheckedChange={(v) => setDialogIsTrial(Boolean(v))}
-                    aria-label={`Toggle ${indicator.trialDays || 15}-day trial`}
-                    className="h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
-                    data-testid="switch-toggle-trial"
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div ref={pricingScrollRef} className="flex-1 overflow-y-auto p-4 pb-4 sm:p-5 sm:pb-4">
+              <DialogHeader className="mb-4 flex-col items-start gap-3 space-y-0 pr-10 sm:flex-row sm:items-center sm:justify-between">
+                <DialogTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Pricing
+                </DialogTitle>
+                {!isFree && (
+                  <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                    <Label
+                      htmlFor="switch-toggle-trial"
+                      className="cursor-pointer text-[11px] font-medium text-muted-foreground"
+                    >
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {indicator.trialDays || 15}-day trial
+                      </span>
+                    </Label>
+                    <Switch
+                      id="switch-toggle-trial"
+                      checked={dialogIsTrial}
+                      onCheckedChange={(v) => setDialogIsTrial(Boolean(v))}
+                      aria-label={`Toggle ${indicator.trialDays || 15}-day trial`}
+                      className="h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
+                      data-testid="switch-toggle-trial"
+                    />
+                  </div>
+                )}
+              </DialogHeader>
+              <DialogDescription className="sr-only">Select version, duration and add to cart.</DialogDescription>
+
+              {/* Version selector */}
+              <RadioGroup
+                value={dialogVersion}
+                onValueChange={(v) => setDialogVersion(v as ProductVersion)}
+                aria-label="Select version"
+                className="gap-2"
+              >
+                {([
+                  { key: "indicator" as ProductVersion, label: "Indicator", icon: LineChart, tagline: "Chart signals", price: indicatorVersionPrice, testId: "dialog-version-indicator" },
+                  { key: "strategy" as ProductVersion, label: "Strategy", icon: Cpu, tagline: "Auto entries & alerts", price: strategyVersionPrice, testId: "dialog-version-strategy" },
+                  { key: "both" as ProductVersion, label: "Indicator + Strategy", icon: Sparkles, tagline: "Both versions bundled", price: bothVersionPrice, testId: "dialog-version-both" },
+                ]).map(({ key, label, icon: VIcon, tagline, price, testId }) => {
+                  const active = dialogVersion === key;
+                  const displayPrice = dialogIsTrial ? computeTrialPrice(key) : price;
+                  const isFreePrice = parseFloat(displayPrice) === 0;
+                  const inputId = `radio-${testId}`;
+                  return (
+                    <Label
+                      key={key}
+                      htmlFor={inputId}
+                      className={`block w-full cursor-pointer rounded-lg border p-3 font-normal transition-all hover-elevate ${active ? "border-primary/60 bg-primary/[0.04]" : "border-card-border"
+                        }`}
+                      data-testid={testId}
+                    >
+                      <div className="flex items-start justify-between gap-3 sm:items-center">
+                        <div className="min-w-0 flex flex-1 items-center gap-2">
+                          <VIcon className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold leading-none">{label}</p>
+                            <p className="mt-1 text-[11px] text-muted-foreground">{tagline}</p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2 self-center">
+                          <div className="text-right">
+                            {isFreePrice ? (
+                              <span className="text-sm font-bold text-emerald-500" data-testid={`text-dialog-price-${key}`}>Free</span>
+                            ) : (
+                              <>
+                                <span className="text-sm font-bold tracking-tight" data-testid={`text-dialog-price-${key}`}>
+                                  ₹{Number(displayPrice).toLocaleString("en-IN")}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">{dialogIsTrial ? "/trial" : "/mo"}</span>
+                              </>
+                            )}
+                          </div>
+                          <RadioGroupItem
+                            value={key}
+                            id={inputId}
+                            aria-label={label}
+                            data-testid={`input-${testId}`}
+                          />
+                        </div>
+                      </div>
+                    </Label>
+                  );
+                })}
+              </RadioGroup>
+
+              {/* Duration selector (hidden when trial) */}
+              {!dialogIsTrial && (
+                <div className="mt-5" data-testid="duration-selector">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Duration</span>
+                    <span className="text-sm font-semibold tabular-nums" data-testid="text-dialog-months">
+                      {dialogMonths} {dialogMonths === 1 ? "month" : "months"}
+                    </span>
+                  </div>
+                  <Slider
+                    min={1}
+                    max={12}
+                    step={1}
+                    value={[dialogMonths]}
+                    onValueChange={(v) => setDialogMonths(v[0] ?? 1)}
+                    data-testid="slider-dialog-months"
                   />
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                    {[1, 3, 6, 9, 12].map((m) => {
+                      const monthly = parseFloat(computeVersionPrice(dialogVersion, indicatorVersionPrice));
+                      const original = monthly * m;
+                      const discount = getDurationDiscount(m);
+                      const discounted = Math.round(original * (1 - discount));
+                      const active = dialogMonths === m;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setDialogMonths(m)}
+                          className={`relative flex min-h-[64px] flex-col items-center justify-center rounded-md border px-2 py-2 transition-colors hover-elevate sm:min-h-[72px] ${active
+                            ? "border-primary/60 bg-primary/[0.06] text-foreground"
+                            : "border-card-border text-muted-foreground"
+                            }`}
+                          data-testid={`button-dialog-months-${m}`}
+                        >
+                          {discount > 0 && (
+                            <span className="absolute -top-1.5 right-0.5 rounded-sm bg-emerald-500/90 px-1 py-px text-[8px] font-bold leading-none text-white">
+                              -{Math.round(discount * 100)}%
+                            </span>
+                          )}
+                          <span className="text-[11px] font-semibold leading-none">{m}M</span>
+                          {original > 0 ? (
+                            <>
+                              {discount > 0 && (
+                                <span className="mt-1 text-[9px] leading-none text-muted-foreground line-through tabular-nums">
+                                  ₹{original.toLocaleString("en-IN")}
+                                </span>
+                              )}
+                              <span className={`mt-0.5 text-[10px] font-bold leading-none tabular-nums ${active ? "text-primary" : "text-foreground"}`}>
+                                ₹{discounted.toLocaleString("en-IN")}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="mt-1 text-[10px] font-bold leading-none text-emerald-500">Free</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-            </DialogHeader>
-            <DialogDescription className="sr-only">Select version, duration and add to cart.</DialogDescription>
 
-            {/* Version selector */}
-            <RadioGroup
-              value={dialogVersion}
-              onValueChange={(v) => setDialogVersion(v as ProductVersion)}
-              aria-label="Select version"
-              className="gap-2"
-            >
-              {([
-                { key: "indicator" as ProductVersion, label: "Indicator", icon: LineChart, tagline: "Chart signals", price: indicatorVersionPrice, testId: "dialog-version-indicator" },
-                { key: "strategy" as ProductVersion, label: "Strategy", icon: Cpu, tagline: "Auto entries & alerts", price: strategyVersionPrice, testId: "dialog-version-strategy" },
-                { key: "both" as ProductVersion, label: "Indicator + Strategy", icon: Sparkles, tagline: "Both versions bundled", price: bothVersionPrice, testId: "dialog-version-both" },
-              ]).map(({ key, label, icon: VIcon, tagline, price, testId }) => {
-                const active = dialogVersion === key;
-                const displayPrice = dialogIsTrial ? computeTrialPrice(key) : price;
-                const isFreePrice = parseFloat(displayPrice) === 0;
-                const inputId = `radio-${testId}`;
-                return (
-                  <Label
-                    key={key}
-                    htmlFor={inputId}
-                    className={`block w-full cursor-pointer rounded-lg border p-3 font-normal transition-all hover-elevate ${active ? "border-primary/60 bg-primary/[0.04]" : "border-card-border"
-                      }`}
-                    data-testid={testId}
-                  >
-                    <div className="flex items-start justify-between gap-3 sm:items-center">
-                      <div className="flex items-center gap-2">
-                        <VIcon className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
-                        <div>
-                          <p className="text-sm font-semibold leading-none">{label}</p>
-                          <p className="mt-1 text-[11px] text-muted-foreground">{tagline}</p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <div className="text-right">
-                          {isFreePrice ? (
-                            <span className="text-sm font-bold text-emerald-500" data-testid={`text-dialog-price-${key}`}>Free</span>
-                          ) : (
-                            <>
-                              <span className="text-sm font-bold tracking-tight" data-testid={`text-dialog-price-${key}`}>
-                                ₹{Number(displayPrice).toLocaleString("en-IN")}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">{dialogIsTrial ? "/trial" : "/mo"}</span>
-                            </>
+              {/* Final price */}
+              <div className="mt-5 rounded-lg border border-card-border bg-muted/30 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Final Price</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {dialogIsTrial
+                        ? `${indicator.trialDays || 15}-day trial · ${VERSION_LABELS[dialogVersion]}`
+                        : `${VERSION_LABELS[dialogVersion]} · ${dialogMonths} ${dialogMonths === 1 ? "month" : "months"}`}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    {(() => {
+                      const monthly = parseFloat(computeVersionPrice(dialogVersion, indicatorVersionPrice));
+                      const original = monthly * dialogMonths;
+                      const discount = getDurationDiscount(dialogMonths);
+                      const total = dialogIsTrial
+                        ? parseFloat(computeTrialPrice(dialogVersion))
+                        : Math.round(original * (1 - discount));
+                      const savings = !dialogIsTrial && discount > 0 ? original - total : 0;
+                      return (
+                        <>
+                          {savings > 0 && (
+                            <p className="text-[11px] leading-none text-muted-foreground line-through tabular-nums" data-testid="text-dialog-original">
+                              ₹{Number(original).toLocaleString("en-IN")}
+                            </p>
                           )}
-                        </div>
-                        <RadioGroupItem
-                          value={key}
-                          id={inputId}
-                          aria-label={label}
-                          data-testid={`input-${testId}`}
-                        />
-                      </div>
-                    </div>
-                  </Label>
-                );
-              })}
-            </RadioGroup>
-
-            {/* Duration selector (hidden when trial) */}
-            {!dialogIsTrial && (
-              <div className="mt-5" data-testid="duration-selector">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Duration</span>
-                  <span className="text-sm font-semibold tabular-nums" data-testid="text-dialog-months">
-                    {dialogMonths} {dialogMonths === 1 ? "month" : "months"}
-                  </span>
-                </div>
-                <Slider
-                  min={1}
-                  max={12}
-                  step={1}
-                  value={[dialogMonths]}
-                  onValueChange={(v) => setDialogMonths(v[0] ?? 1)}
-                  data-testid="slider-dialog-months"
-                />
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                  {[1, 3, 6, 9, 12].map((m) => {
-                    const monthly = parseFloat(computeVersionPrice(dialogVersion, indicatorVersionPrice));
-                    const original = monthly * m;
-                    const discount = getDurationDiscount(m);
-                    const discounted = Math.round(original * (1 - discount));
-                    const active = dialogMonths === m;
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setDialogMonths(m)}
-                        className={`relative flex min-h-[64px] flex-col items-center justify-center rounded-md border px-2 py-2 transition-colors hover-elevate sm:min-h-[72px] ${active
-                          ? "border-primary/60 bg-primary/[0.06] text-foreground"
-                          : "border-card-border text-muted-foreground"
-                          }`}
-                        data-testid={`button-dialog-months-${m}`}
-                      >
-                        {discount > 0 && (
-                          <span className="absolute -top-1.5 right-0.5 rounded-sm bg-emerald-500/90 px-1 py-px text-[8px] font-bold leading-none text-white">
-                            -{Math.round(discount * 100)}%
-                          </span>
-                        )}
-                        <span className="text-[11px] font-semibold leading-none">{m}M</span>
-                        {original > 0 ? (
-                          <>
-                            {discount > 0 && (
-                              <span className="mt-1 text-[9px] leading-none text-muted-foreground line-through tabular-nums">
-                                ₹{original.toLocaleString("en-IN")}
-                              </span>
-                            )}
-                            <span className={`mt-0.5 text-[10px] font-bold leading-none tabular-nums ${active ? "text-primary" : "text-foreground"}`}>
-                              ₹{discounted.toLocaleString("en-IN")}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="mt-1 text-[10px] font-bold leading-none text-emerald-500">Free</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                          <p className="mt-0.5 text-2xl font-bold tracking-tight" data-testid="text-dialog-total">
+                            {total === 0 ? "Free" : `₹${Number(total).toLocaleString("en-IN")}`}
+                          </p>
+                          {savings > 0 && (
+                            <p className="mt-0.5 text-[10px] font-semibold text-emerald-500 tabular-nums" data-testid="text-dialog-savings">
+                              Save ₹{Number(savings).toLocaleString("en-IN")} ({Math.round(discount * 100)}% off)
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Final price */}
-            <div className="mt-5 rounded-lg border border-card-border bg-muted/30 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Final Price</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {dialogIsTrial
-                      ? `${indicator.trialDays || 15}-day trial · ${VERSION_LABELS[dialogVersion]}`
-                      : `${VERSION_LABELS[dialogVersion]} · ${dialogMonths} ${dialogMonths === 1 ? "month" : "months"}`}
+              {!canAddVersion(dialogVersion) && (
+                <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2.5" data-testid="alert-dialog-mixed">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                  <p className="text-[11.5px] leading-snug text-amber-600 dark:text-amber-300">
+                    This indicator is already in your cart. Remove it from cart first if you want to change the version.
                   </p>
                 </div>
-                <div className="text-right">
+              )}
+
+              {!isFree && (
+                <div className="mt-5">
+                  <Separator className="my-4" />
+
                   {(() => {
-                    const monthly = parseFloat(computeVersionPrice(dialogVersion, indicatorVersionPrice));
-                    const original = monthly * dialogMonths;
-                    const discount = getDurationDiscount(dialogMonths);
-                    const total = dialogIsTrial
-                      ? parseFloat(computeTrialPrice(dialogVersion))
-                      : Math.round(original * (1 - discount));
-                    const savings = !dialogIsTrial && discount > 0 ? original - total : 0;
+                    const trialPrice = parseFloat(computeTrialPrice(dialogVersion));
+                    const trialDays = indicator.trialDays || 15;
+
                     return (
-                      <>
-                        {savings > 0 && (
-                          <p className="text-[11px] leading-none text-muted-foreground line-through tabular-nums" data-testid="text-dialog-original">
-                            ₹{Number(original).toLocaleString("en-IN")}
-                          </p>
-                        )}
-                        <p className="mt-0.5 text-2xl font-bold tracking-tight" data-testid="text-dialog-total">
-                          {total === 0 ? "Free" : `₹${Number(total).toLocaleString("en-IN")}`}
-                        </p>
-                        {savings > 0 && (
-                          <p className="mt-0.5 text-[10px] font-semibold text-emerald-500 tabular-nums" data-testid="text-dialog-savings">
-                            Save ₹{Number(savings).toLocaleString("en-IN")} ({Math.round(discount * 100)}% off)
-                          </p>
-                        )}
-                      </>
+                      <button
+                        type="button"
+                        onClick={() => setDialogIsTrial(true)}
+                        className="flex w-full flex-col gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-left transition-colors hover-elevate sm:flex-row sm:items-center sm:justify-between"
+                        data-testid="banner-trial-offer-inline"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                          <div>
+                            <p className="text-xs font-semibold text-foreground">{trialDays} Days Trial</p>
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              Try {VERSION_LABELS[dialogVersion]} risk-free before you subscribe.
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="shrink-0 text-sm font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+                          {trialPrice === 0 ? "Free" : `₹${Number(trialPrice).toLocaleString("en-IN")}`}
+                        </span>
+                      </button>
                     );
                   })()}
                 </div>
-              </div>
+              )}
+
             </div>
-
-            {!canAddVersion(dialogVersion) && (
-              <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2.5" data-testid="alert-dialog-mixed">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                <p className="text-[11.5px] leading-snug text-amber-600 dark:text-amber-300">
-                  This indicator is already in your cart. Remove it from cart first if you want to change the version.
-                </p>
-              </div>
-            )}
-
-            <div className="mt-4 space-y-2">
+            <div className="sticky bottom-0 shrink-0 border-t border-card-border bg-background p-4">
               {inCart ? (
-                <Link href="/cart">
+                <Link href="/cart" className="block w-full">
                   <Button className="h-11 w-full rounded-lg text-sm font-semibold sm:h-12 sm:text-base" size="lg" data-testid="button-dialog-go-cart">
                     <ShoppingCart className="mr-2 h-4 w-4" /> Go to Cart
                   </Button>
@@ -1100,34 +1167,6 @@ export default function IndicatorDetail() {
                 </Button>
               )}
             </div>
-
-            <Separator className="my-4" />
-
-            {(() => {
-              const trialPrice = parseFloat(computeTrialPrice(dialogVersion));
-              const trialDays = indicator.trialDays || 15;
-              return (
-                <button
-                  type="button"
-                  onClick={() => setDialogIsTrial(true)}
-                  className="flex w-full flex-col gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-left transition-colors hover-elevate sm:flex-row sm:items-center sm:justify-between"
-                  data-testid="banner-trial-offer"
-                >
-                  <div className="flex items-start gap-2">
-                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">{trialDays} Days Trial</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        Try {VERSION_LABELS[dialogVersion]} risk-free before you subscribe.
-                      </p>
-                    </div>
-                  </div>
-                  <span className="shrink-0 text-sm font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums" data-testid="text-trial-price">
-                    {trialPrice === 0 ? "Free" : `₹${Number(trialPrice).toLocaleString("en-IN")}`}
-                  </span>
-                </button>
-              );
-            })()}
           </div>
         </DialogContent>
       </Dialog>

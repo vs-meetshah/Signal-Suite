@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IndicatorCard } from "@/components/indicator-card";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { Indicator } from "@shared/schema";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, ShieldCheck, BarChart3, Plug, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
@@ -45,10 +46,25 @@ export default function IndicatorsPage() {
   const [sortBy, setSortBy] = useState("newest");
   const [marketFilters, setMarketFilters] = useState<Set<MarketKey>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
+  const [isDesktopFilters, setIsDesktopFilters] = useState(false);
 
   const { data: indicators, isLoading } = useQuery<Indicator[]>({
     queryKey: ["/api/indicators"],
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const syncViewport = () => {
+      setIsDesktopFilters(mediaQuery.matches);
+      setFilterOpen(false);
+    };
+
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
 
   const matchesCategory = (i: Indicator, key: CategoryKey) => {
     const opt = CATEGORY_OPTIONS.find((o) => o.key === key);
@@ -108,6 +124,77 @@ export default function IndicatorsPage() {
     { Icon: Plug, title: "Easy to Use", subtitle: "Plug & play on TradingView" },
   ];
 
+  const filterPanel = (showHeader = true) => (
+    <>
+      {showHeader && (
+        <div className="flex justify-end border-b px-4 py-3">
+          <button
+            onClick={resetFilters}
+            className="text-xs font-medium text-primary hover:underline"
+            data-testid="button-reset-filters"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+      <div className="max-h-[min(70vh,420px)] space-y-5 overflow-y-auto px-4 py-4">
+        <div>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Category
+          </h4>
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button
+              size="sm"
+              variant={activeCategory === "All" ? "default" : "outline"}
+              onClick={() => setActiveCategory("All")}
+              className="h-8 justify-start"
+              data-testid="filter-cat-all"
+            >
+              All
+            </Button>
+            {CATEGORY_OPTIONS.map((c) => (
+              <Button
+                key={c.key}
+                size="sm"
+                variant={activeCategory === c.key ? "default" : "outline"}
+                onClick={() => setActiveCategory(c.key)}
+                className="h-8 justify-start"
+                data-testid={`filter-cat-${c.key.toLowerCase()}`}
+              >
+                {c.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Markets
+          </h4>
+          <div className="space-y-2">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox
+                checked={marketFilters.size === 0}
+                onCheckedChange={() => setMarketFilters(new Set())}
+                data-testid="filter-market-all"
+              />
+              <span>All Markets</span>
+            </label>
+            {MARKET_OPTIONS.map((m) => (
+              <label key={m.key} className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={marketFilters.has(m.key)}
+                  onCheckedChange={() => toggleMarket(m.key)}
+                  data-testid={`filter-market-${m.key}`}
+                />
+                <span>{m.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -125,9 +212,13 @@ export default function IndicatorsPage() {
               </div>
             )}
           </div>
-          <Card className="flex flex-wrap items-center gap-5 border-card-border bg-card/60 px-5 py-4 backdrop-blur">
+          <Card className="grid w-full gap-4 border-card-border bg-card/60 px-5 py-4 backdrop-blur sm:grid-cols-3 lg:w-auto">
             {trustBadges.map(({ Icon, title, subtitle }) => (
-              <div key={title} className="flex items-center gap-3" data-testid={`trust-${title.toLowerCase().replace(/\s/g, "-")}`}>
+              <div
+                key={title}
+                className="flex min-w-0 items-center gap-3"
+                data-testid={`trust-${title.toLowerCase().replace(/\s/g, "-")}`}
+              >
                 <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
                   <Icon className="h-4 w-4" />
                 </div>
@@ -155,108 +246,90 @@ export default function IndicatorsPage() {
               </Button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:flex-wrap md:items-center md:justify-end">
+            <div className="relative col-span-2 md:col-span-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search indicators..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 w-[220px] pl-8"
+                className="h-9 w-full pl-8 md:w-[220px]"
                 data-testid="input-search"
               />
             </div>
-            <Popover open={filterOpen} onOpenChange={setFilterOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="relative h-9 px-3"
-                  data-testid="button-open-filters"
-                  aria-label="Filters"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span className="ml-1.5 hidden sm:inline">Filters</span>
-                  {activeFilterCount > 0 && (
-                    <span
-                      className="ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
-                      data-testid="text-filter-count"
-                    >
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 p-0" data-testid="popover-filters">
-                <div className="flex items-center justify-between border-b px-4 py-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide">Filters</h3>
-                  <button
-                    onClick={resetFilters}
-                    className="text-xs font-medium text-primary hover:underline"
-                    data-testid="button-reset-filters"
+            {isDesktopFilters ? (
+              <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="relative h-9 w-full justify-center px-3 md:w-auto"
+                    data-testid="button-open-filters"
+                    aria-label="Filters"
                   >
-                    Reset
-                  </button>
-                </div>
-                <div className="space-y-5 px-4 py-4">
-                  <div>
-                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Category
-                    </h4>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <Button
-                        size="sm"
-                        variant={activeCategory === "All" ? "default" : "outline"}
-                        onClick={() => setActiveCategory("All")}
-                        className="h-8 justify-start"
-                        data-testid="filter-cat-all"
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="ml-1.5">Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span
+                        className="ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
+                        data-testid="text-filter-count"
                       >
-                        All
-                      </Button>
-                      {CATEGORY_OPTIONS.map((c) => (
-                        <Button
-                          key={c.key}
-                          size="sm"
-                          variant={activeCategory === c.key ? "default" : "outline"}
-                          onClick={() => setActiveCategory(c.key)}
-                          className="h-8 justify-start"
-                          data-testid={`filter-cat-${c.key.toLowerCase()}`}
-                        >
-                          {c.label}
-                        </Button>
-                      ))}
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  side="bottom"
+                  sideOffset={8}
+                  className="z-[90] w-[18rem] overflow-hidden p-0"
+                  data-testid="popover-filters"
+                >
+                  {filterPanel()}
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+                <DrawerTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="relative h-9 w-full justify-center px-3"
+                    data-testid="button-open-filters-mobile"
+                    aria-label="Filters"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="ml-1.5">Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span
+                        className="ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
+                        data-testid="text-filter-count-mobile"
+                      >
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="max-h-[85vh]">
+                  <DrawerHeader className="border-b px-4 py-3 text-left">
+                    <DrawerTitle className="sr-only">Filters</DrawerTitle>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={resetFilters}
+                        className="text-xs font-medium text-primary hover:underline"
+                        data-testid="button-reset-filters-mobile"
+                      >
+                        Reset
+                      </button>
                     </div>
-                  </div>
-                  <div>
-                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Markets
-                    </h4>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={marketFilters.size === 0}
-                          onCheckedChange={() => setMarketFilters(new Set())}
-                          data-testid="filter-market-all"
-                        />
-                        <span>All Markets</span>
-                      </label>
-                      {MARKET_OPTIONS.map((m) => (
-                        <label key={m.key} className="flex items-center gap-2 text-sm cursor-pointer">
-                          <Checkbox
-                            checked={marketFilters.has(m.key)}
-                            onCheckedChange={() => toggleMarket(m.key)}
-                            data-testid={`filter-market-${m.key}`}
-                          />
-                          <span>{m.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                  </DrawerHeader>
+                  {filterPanel(false)}
+                </DrawerContent>
+              </Drawer>
+            )}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-9 w-[140px]" data-testid="select-sort">
+              <SelectTrigger className="h-9 w-full md:w-[140px]" data-testid="select-sort">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

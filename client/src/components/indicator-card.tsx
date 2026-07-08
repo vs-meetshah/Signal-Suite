@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ArrowRight, Check, ShoppingCart, Star, Bookmark, Flame, Sparkles, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ export function IndicatorCard({
 }) {
   const { isInCart, getCartItem, canAddVersion } = useCart();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const inCart = isInCart(indicator.id);
   const cartItem = getCartItem(indicator.id);
   const isFree = indicator.tier === "free";
@@ -38,6 +39,14 @@ export function IndicatorCard({
   const blockedByMix = !canAddVersion("indicator");
   const [watchlist, setWatchlist] = useState<number[]>(() => readWatchlistIds());
   const inWatchlist = watchlist.includes(indicator.id);
+  const handleCardClick = () => {
+    navigate(`/indicator/${indicator.slug}`);
+  };
+
+  const stopCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   useEffect(() => {
     const sync = () => setWatchlist(readWatchlistIds());
@@ -56,7 +65,7 @@ export function IndicatorCard({
       ? watchlist.filter((id) => id !== indicator.id)
       : [...watchlist, indicator.id];
     setWatchlist(next);
-    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next)); } catch {}
+    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next)); } catch { }
     window.dispatchEvent(new Event("watchlist-updated"));
     toast({
       title: inWatchlist ? "Removed from watchlist" : "Saved to watchlist",
@@ -106,11 +115,17 @@ export function IndicatorCard({
       transition={{ duration: 0.4, ease: "easeInOut" }}
     >
       <Card
-        className={`group relative flex flex-col transition-all duration-300 hover-elevate ${
-          inCart
-            ? "border-primary/40 bg-primary/[0.03]"
-            : "border-card-border"
-        }`}
+        role="link"
+        tabIndex={0}
+        onClick={handleCardClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleCardClick();
+          }
+        }}
+        className={`group relative flex h-full cursor-pointer flex-col overflow-hidden transition-all duration-300 hover-elevate ${inCart ? "border-primary/40 bg-primary/[0.03]" : "border-card-border"
+          }`}
         data-testid={`card-indicator-${indicator.id}`}
       >
         {adminOverlay}
@@ -212,8 +227,8 @@ export function IndicatorCard({
           </div>
 
           <div className="flex flex-1 flex-col gap-3 p-4">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="text-base font-semibold leading-tight tracking-tight" data-testid={`text-indicator-name-${indicator.id}`}>
+            <div className="flex min-h-[44px] items-start justify-between gap-2">
+              <h3 className="line-clamp-2 text-base font-semibold leading-tight tracking-tight" data-testid={`text-indicator-name-${indicator.id}`}>
                 {indicator.name}
               </h3>
               <Badge
@@ -230,7 +245,7 @@ export function IndicatorCard({
             </p>
 
             {tagPills.length > 0 && (
-              <div className="flex flex-wrap gap-1.5" data-testid={`tags-${indicator.id}`}>
+              <div className="flex min-h-[24px] flex-wrap gap-1.5 overflow-hidden" data-testid={`tags-${indicator.id}`}>
                 {tagPills.map((t) => (
                   <span
                     key={t}
@@ -243,58 +258,58 @@ export function IndicatorCard({
             )}
 
             <div className="mt-auto pt-1">
-            {inCart && !justAdded && (
-              <div className="mb-2 flex items-center gap-2" data-testid={`text-in-cart-${indicator.id}`}>
-                <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="text-xs font-medium text-primary">
-                  {cartItem?.version === "strategy" ? "Strategy" : cartItem?.version === "both" ? "Indicator + Strategy" : "Indicator"}
-                  {cartItem?.isTrial ? " · Trial" : ""} — Added to Cart
-                </span>
-              </div>
-            )}
-            {!inCart && blockedByMix && (
-              <p className="mb-2 text-[10.5px] leading-tight text-amber-600 dark:text-amber-400" data-testid={`text-mix-warn-${indicator.id}`}>
-                Cart has Strategies — open this indicator to switch versions.
-              </p>
-            )}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs" data-testid={`rating-${indicator.id}`}>
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-semibold tabular-nums">
-                  {indicator.rating ? Number(indicator.rating).toFixed(1) : "—"}
-                </span>
-                <span className="text-muted-foreground">
-                  ({indicator.reviewCount ?? 0})
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                {inCart ? (
-                  <Link href="/cart">
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-primary" data-testid={`button-go-cart-${indicator.id}`}>
-                      <ShoppingCart className="mr-1 h-3.5 w-3.5" /> Go to Cart
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href={`/indicator/${indicator.slug}`}>
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-primary" data-testid={`button-view-${indicator.id}`}>
-                      View Details <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`h-8 w-8 ${inWatchlist ? "text-primary" : "text-muted-foreground"}`}
-                  onClick={handleWatchlist}
-                  aria-pressed={inWatchlist}
-                  aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-                  data-testid={`button-watchlist-${indicator.id}`}
-                >
-                  <Bookmark className={`h-4 w-4 ${inWatchlist ? "fill-primary" : ""}`} />
-                </Button>
+              {inCart && !justAdded && (
+                <div className="mb-2 flex items-center gap-2" data-testid={`text-in-cart-${indicator.id}`}>
+                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="text-xs font-medium text-primary">
+                    {cartItem?.version === "strategy" ? "Strategy" : cartItem?.version === "both" ? "Indicator + Strategy" : "Indicator"}
+                    {cartItem?.isTrial ? " · Trial" : ""} — Added to Cart
+                  </span>
+                </div>
+              )}
+              {!inCart && blockedByMix && (
+                <p className="mb-2 text-[10.5px] leading-tight text-amber-600 dark:text-amber-400" data-testid={`text-mix-warn-${indicator.id}`}>
+                  Cart has Strategies — open this indicator to switch versions.
+                </p>
+              )}
+              <div className="flex min-h-[32px] items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs" data-testid={`rating-${indicator.id}`}>
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <span className="font-semibold tabular-nums">
+                    {indicator.rating ? Number(indicator.rating).toFixed(1) : "—"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    ({indicator.reviewCount ?? 0})
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {inCart ? (
+                    <Link href="/cart" onClick={stopCardClick}>
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-primary" data-testid={`button-go-cart-${indicator.id}`}>
+                        <ShoppingCart className="mr-1 h-3.5 w-3.5" /> Go to Cart
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href={`/indicator/${indicator.slug}`} onClick={stopCardClick}>
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-primary" data-testid={`button-view-${indicator.id}`}>
+                        View Details <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                      </Button>
+                    </Link>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${inWatchlist ? "text-primary" : "text-muted-foreground"}`}
+                    onClick={handleWatchlist}
+                    aria-pressed={inWatchlist}
+                    aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+                    data-testid={`button-watchlist-${indicator.id}`}
+                  >
+                    <Bookmark className={`h-4 w-4 ${inWatchlist ? "fill-primary" : ""}`} />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
       </Card>

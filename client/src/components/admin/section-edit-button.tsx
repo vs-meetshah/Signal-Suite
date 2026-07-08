@@ -67,7 +67,7 @@ const SECTIONS: Record<SectionKey, SectionDef> = {
     description: "Title, badges, short tagline shown at the top of the page.",
     fields: [
       { key: "name", label: "Name *", type: "text", required: true, placeholder: "Smart Trend Pro" },
-      { key: "shortDescription", label: "Short Description *", type: "textarea", rows: 2, required: true, placeholder: "One-sentence tagline" , fullWidth: true },
+      { key: "shortDescription", label: "Short Description *", type: "textarea", rows: 2, required: true, placeholder: "One-sentence tagline", fullWidth: true },
       { key: "category", label: "Category *", type: "text", required: true, placeholder: "Trend Following" },
       {
         key: "tier", label: "Tier *", type: "select", required: true,
@@ -89,8 +89,10 @@ const SECTIONS: Record<SectionKey, SectionDef> = {
     title: "Tags",
     description: "Pills shown under the hero. One tag per line.",
     fields: [
-      { key: "tags", label: "Tags (one per line)", type: "textarea-array", rows: 6, fullWidth: true,
-        placeholder: "Multi-timeframe\nConfluence\nAlgorithmic" },
+      {
+        key: "tags", label: "Tags (one per line)", type: "textarea-array", rows: 6, fullWidth: true,
+        placeholder: "Multi-timeframe\nConfluence\nAlgorithmic"
+      },
     ],
   },
   rating: {
@@ -104,35 +106,47 @@ const SECTIONS: Record<SectionKey, SectionDef> = {
     title: "About / Description",
     description: "Full marketing description in the Overview tab.",
     fields: [
-      { key: "description", label: "Description *", type: "textarea", rows: 10, required: true, fullWidth: true,
-        placeholder: "Detailed description shown on the indicator detail page" },
+      {
+        key: "description", label: "Description *", type: "textarea", rows: 10, required: true, fullWidth: true,
+        placeholder: "Detailed description shown on the indicator detail page"
+      },
     ],
   },
   features: {
     title: "Key Features",
     description: "Bullet list of features shown next to the description.",
     fields: [
-      { key: "features", label: "Features (one per line) *", type: "textarea-array", rows: 10, required: true, fullWidth: true,
-        placeholder: "Real-time signals\nMulti-timeframe analysis\nNo repaint" },
+      {
+        key: "features", label: "Features (one per line) *", type: "textarea-array", rows: 10, required: true, fullWidth: true,
+        placeholder: "Real-time signals\nMulti-timeframe analysis\nNo repaint"
+      },
     ],
   },
   video: {
     title: "Video Tutorial & Image",
     fields: [
-      { key: "videoUrl", label: "Video URL", type: "text", placeholder: "https://youtube.com/...", fullWidth: true,
-        hint: "YouTube / Vimeo / direct video file URL." },
-      { key: "imageUrl", label: "Image URL", type: "text", placeholder: "https://…", fullWidth: true,
-        hint: "Optional thumbnail / cover image." },
+      {
+        key: "videoUrl", label: "Video URL", type: "text", placeholder: "https://youtube.com/...", fullWidth: true,
+        hint: "YouTube / Vimeo / direct video file URL."
+      },
+      {
+        key: "imageUrl", label: "Image URL", type: "text", placeholder: "https://…", fullWidth: true,
+        hint: "Optional thumbnail / cover image."
+      },
     ],
   },
   markets: {
     title: "Markets & Timeframes",
     description: "Used in the Compatibility table.",
     fields: [
-      { key: "markets", label: "Markets (one per line)", type: "textarea-array", rows: 6, fullWidth: true,
-        placeholder: "NIFTY 50\nBANKNIFTY\nBTCUSDT" },
-      { key: "bestTimeframes", label: "Best Timeframes (one per line)", type: "textarea-array", rows: 6, fullWidth: true,
-        placeholder: "15 min\n1 hour\n4 hour" },
+      {
+        key: "markets", label: "Markets (one per line)", type: "textarea-array", rows: 6, fullWidth: true,
+        placeholder: "NIFTY 50\nBANKNIFTY\nBTCUSDT"
+      },
+      {
+        key: "bestTimeframes", label: "Best Timeframes (one per line)", type: "textarea-array", rows: 6, fullWidth: true,
+        placeholder: "15 min\n1 hour\n4 hour"
+      },
     ],
   },
   stats: {
@@ -151,8 +165,10 @@ const SECTIONS: Record<SectionKey, SectionDef> = {
   signalLogic: {
     title: "Signal Logic & Methodology",
     fields: [
-      { key: "signalLogic", label: "Signal Logic", type: "textarea", rows: 10, fullWidth: true,
-        placeholder: "How signals are generated…" },
+      {
+        key: "signalLogic", label: "Signal Logic", type: "textarea", rows: 10, fullWidth: true,
+        placeholder: "How signals are generated…"
+      },
     ],
   },
   entryExit: {
@@ -173,18 +189,24 @@ const SECTIONS: Record<SectionKey, SectionDef> = {
   pricing: {
     title: "Pricing & Trial",
     fields: [
-      { key: "price", label: "Price (₹) *", type: "number", required: true, placeholder: "9000",
-        hint: "Set 0 for free indicators." },
-      { key: "trialDays", label: "Trial Days", type: "number", placeholder: "15",
-        hint: "Premium only — typically 15." },
+      {
+        key: "price", label: "Price (₹) *", type: "number", required: true, placeholder: "9000",
+        hint: "Set 0 for free indicators."
+      },
+      {
+        key: "trialDays", label: "Trial Days", type: "number", placeholder: "15",
+        hint: "Premium only — typically 15."
+      },
     ],
   },
   faqs: {
     title: "FAQs",
     description: "Question on first line, answer on next line(s). Separate each FAQ with --- on its own line.",
     fields: [
-      { key: "faqs", label: "FAQs", type: "faqs", rows: 14, fullWidth: true,
-        placeholder: "Does this indicator repaint?\nNo, all signals are confirmed at bar close.\n---\nWhat timeframes are supported?\nAll timeframes from 1m to 1D are supported." },
+      {
+        key: "faqs", label: "FAQs", type: "faqs", rows: 14, fullWidth: true,
+        placeholder: "Does this indicator repaint?\nNo, all signals are confirmed at bar close.\n---\nWhat timeframes are supported?\nAll timeframes from 1m to 1D are supported."
+      },
     ],
   },
 };
@@ -336,10 +358,10 @@ function SectionEditDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="flex max-h-[90vh] w-[calc(100vw-1rem)] max-w-2xl flex-col overflow-hidden p-0 sm:w-full"
         data-testid={`dialog-section-${sectionKey}`}
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0 px-6 pt-6">
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-4 w-4" /> Edit {section.title}
           </DialogTitle>
@@ -348,102 +370,113 @@ function SectionEditDialog({
           )}
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-3 -mr-3">
-          <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2">
-            {section.fields.map((f) => {
-              const cls = f.fullWidth ? "sm:col-span-2" : "";
-              const id = `field-${sectionKey}-${String(f.key)}`;
-              const val = values[f.key as string];
-              return (
-                <div key={String(f.key)} className={`space-y-1 ${cls}`}>
-                  {f.type !== "checkbox" && (
-                    <Label htmlFor={id} className="text-xs font-medium">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+          <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2">    {section.fields.map((f) => {
+            const cls = f.fullWidth ? "sm:col-span-2" : "";
+            const id = `field-${sectionKey}-${String(f.key)}`;
+            const val = values[f.key as string];
+            return (
+              <div key={String(f.key)} className={`space-y-1 ${cls}`}>
+                {f.type !== "checkbox" && (
+                  <Label htmlFor={id} className="text-xs font-medium">
+                    {f.label}
+                  </Label>
+                )}
+                {f.type === "text" && (
+                  <Input
+                    id={id}
+                    value={String(val ?? "")}
+                    onChange={(e) => setVal(String(f.key), e.target.value)}
+                    placeholder={f.placeholder}
+                    data-testid={`input-section-${sectionKey}-${String(f.key)}`}
+                  />
+                )}
+                {f.type === "number" && (
+                  <Input
+                    id={id}
+                    type="number"
+                    min="0"
+                    value={String(val ?? "")}
+                    onChange={(e) => setVal(String(f.key), e.target.value)}
+                    placeholder={f.placeholder}
+                    data-testid={`input-section-${sectionKey}-${String(f.key)}`}
+                  />
+                )}
+                {(f.type === "textarea" || f.type === "textarea-array" || f.type === "faqs") && (
+                  <Textarea
+                    id={id}
+                    value={String(val ?? "")}
+                    onChange={(e) => setVal(String(f.key), e.target.value)}
+                    rows={sectionKey === "markets" ? 5 : f.rows ?? 4}
+                    placeholder={f.placeholder}
+                    className={f.type === "textarea" ? "" : "font-mono text-xs"}
+                    data-testid={`input-section-${sectionKey}-${String(f.key)}`}
+                  />
+                )}
+                {f.type === "select" && (
+                  <Select
+                    value={String(val ?? "")}
+                    onValueChange={(v) => setVal(String(f.key), v)}
+                  >
+                    <SelectTrigger
+                      id={id}
+                      data-testid={`input-section-${sectionKey}-${String(f.key)}`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(f.options || []).map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {f.type === "checkbox" && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      id={id}
+                      type="checkbox"
+                      checked={!!val}
+                      onChange={(e) => setVal(String(f.key), e.target.checked)}
+                      className="h-4 w-4 rounded border-input"
+                      data-testid={`input-section-${sectionKey}-${String(f.key)}`}
+                    />
+                    <Label htmlFor={id} className="cursor-pointer text-xs font-medium">
                       {f.label}
                     </Label>
-                  )}
-                  {f.type === "text" && (
-                    <Input
-                      id={id}
-                      value={String(val ?? "")}
-                      onChange={(e) => setVal(String(f.key), e.target.value)}
-                      placeholder={f.placeholder}
-                      data-testid={`input-section-${sectionKey}-${String(f.key)}`}
+                  </div>
+                )}
+                {f.hint && <p className="text-[10px] text-muted-foreground">{f.hint}</p>}
+
+                {String(f.key) === "imageUrl" && String(val ?? "").trim() && (
+                  <div className="mt-2 overflow-hidden rounded-md border border-card-border bg-muted">
+                    <img
+                      src={String(val)}
+                      alt="Image preview"
+                      className="aspect-video w-full object-cover"
+                      loading="lazy"
+                      data-testid={`preview-section-${sectionKey}-image`}
                     />
-                  )}
-                  {f.type === "number" && (
-                    <Input
-                      id={id}
-                      type="number"
-                      min="0"
-                      value={String(val ?? "")}
-                      onChange={(e) => setVal(String(f.key), e.target.value)}
-                      placeholder={f.placeholder}
-                      data-testid={`input-section-${sectionKey}-${String(f.key)}`}
-                    />
-                  )}
-                  {(f.type === "textarea" || f.type === "textarea-array" || f.type === "faqs") && (
-                    <Textarea
-                      id={id}
-                      value={String(val ?? "")}
-                      onChange={(e) => setVal(String(f.key), e.target.value)}
-                      rows={f.rows ?? 4}
-                      placeholder={f.placeholder}
-                      className={f.type === "textarea" ? "" : "font-mono text-xs"}
-                      data-testid={`input-section-${sectionKey}-${String(f.key)}`}
-                    />
-                  )}
-                  {f.type === "select" && (
-                    <Select
-                      value={String(val ?? "")}
-                      onValueChange={(v) => setVal(String(f.key), v)}
-                    >
-                      <SelectTrigger
-                        id={id}
-                        data-testid={`input-section-${sectionKey}-${String(f.key)}`}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(f.options || []).map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {f.type === "checkbox" && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <input
-                        id={id}
-                        type="checkbox"
-                        checked={!!val}
-                        onChange={(e) => setVal(String(f.key), e.target.checked)}
-                        className="h-4 w-4 rounded border-input"
-                        data-testid={`input-section-${sectionKey}-${String(f.key)}`}
-                      />
-                      <Label htmlFor={id} className="cursor-pointer text-xs font-medium">
-                        {f.label}
-                      </Label>
-                    </div>
-                  )}
-                  {f.hint && <p className="text-[10px] text-muted-foreground">{f.hint}</p>}
-                </div>
-              );
-            })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           </div>
-        </ScrollArea>
+        </div>
 
         {validationError && (
           <div
-            className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
+            className="mx-6 mb-3 shrink-0 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
             data-testid={`validation-error-${sectionKey}`}
           >
             <AlertTriangle className="h-3.5 w-3.5" /> {validationError}
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0 border-t border-card-border px-6 py-4">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

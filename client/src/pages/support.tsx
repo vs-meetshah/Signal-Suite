@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { LifeBuoy, Mail, MessageCircle, Clock, ShieldCheck } from "lucide-react";
+import { LifeBuoy, Mail, MessageCircle, Clock, ShieldCheck, HelpCircle } from "lucide-react";
 
 const FAQS = [
   {
@@ -87,15 +87,35 @@ export default function SupportPage() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div>
-            <h2 className="mb-4 text-xl font-semibold">Frequently asked questions</h2>
-            <Card className="border-card-border p-2">
-              <Accordion type="single" collapsible className="w-full">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold">Quick answers</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Find answers to common questions about access, trials, billing, and setup.
+              </p>
+            </div>
+
+            <Card className="border-card-border p-3 sm:p-4">
+              <Accordion type="single" collapsible className="w-full space-y-2">
                 {FAQS.map((f, idx) => (
-                  <AccordionItem key={idx} value={`faq-${idx}`} className="border-b last:border-b-0 px-3">
-                    <AccordionTrigger className="text-left text-sm font-medium" data-testid={`faq-q-${idx}`}>
-                      {f.q}
+                  <AccordionItem
+                    key={idx}
+                    value={`faq-${idx}`}
+                    className="rounded-lg border border-card-border bg-background px-4 transition-colors hover:bg-muted/40 data-[state=open]:bg-muted/30"
+                  >
+                    <AccordionTrigger
+                      className="gap-3 py-4 text-left text-sm font-semibold hover:no-underline"
+                      data-testid={`faq-q-${idx}`}
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="flex-1">{f.q}</span>
                     </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground" data-testid={`faq-a-${idx}`}>
+
+                    <AccordionContent
+                      className="pb-4 pl-10 text-sm leading-6 text-muted-foreground"
+                      data-testid={`faq-a-${idx}`}
+                    >
                       {f.a}
                     </AccordionContent>
                   </AccordionItem>

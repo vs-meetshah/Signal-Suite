@@ -60,7 +60,7 @@ export function Navbar() {
     : "";
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl" data-testid="navbar">
+    <nav className="sticky top-0 z-[100] border-b bg-background/80 backdrop-blur-xl" data-testid="navbar">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5" data-testid="link-home">
@@ -228,16 +228,6 @@ export function Navbar() {
             )}
             {user && (
               <>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start"
-                    data-testid="link-mobile-dashboard"
-                  >
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                  </Button>
-                </Link>
                 {user.isAdmin && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)}>
                     <Button
@@ -260,7 +250,7 @@ export function Navbar() {
                   }}
                   data-testid="button-mobile-logout"
                 >
-                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                  Log out
                 </Button>
               </>
             )}
