@@ -38,7 +38,12 @@ export async function registerRoutes(
         return res.json({ hasAccess: true });
       }
       const expiry = new Date(order.approvedAt);
-      expiry.setMonth(expiry.getMonth() + match.duration);
+
+      if (match.isTrial) {
+        expiry.setDate(expiry.getDate() + 15);
+      } else {
+        expiry.setMonth(expiry.getMonth() + match.duration);
+      }
       if (expiry.getTime() > Date.now()) {
         return res.json({ hasAccess: true });
       }
@@ -127,7 +132,12 @@ export async function registerRoutes(
                 accessStatus = "rejected";
               } else if (order.status === "approved" && order.approvedAt) {
                 const expiry = new Date(order.approvedAt);
-                expiry.setMonth(expiry.getMonth() + item.duration);
+
+                if (item.isTrial) {
+                  expiry.setDate(expiry.getDate() + 15);
+                } else {
+                  expiry.setMonth(expiry.getMonth() + item.duration);
+                }
                 const ms = expiry.getTime() - Date.now();
                 daysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
                 accessStatus = daysRemaining > 0 ? "active" : "expired";
@@ -381,7 +391,13 @@ export async function registerRoutes(
         let isActive = false;
         if (order.approvedAt) {
           const expiry = new Date(order.approvedAt);
-          expiry.setMonth(expiry.getMonth() + it.duration);
+
+          if (it.isTrial) {
+            expiry.setDate(expiry.getDate() + 15);
+          } else {
+            expiry.setMonth(expiry.getMonth() + it.duration);
+          }
+
           isActive = expiry.getTime() > now.getTime();
         }
         if (ind?.tier === "free") cur.hasFree = true;
@@ -622,7 +638,12 @@ export async function registerRoutes(
           } else if (order.status === "approved" && order.approvedAt) {
             const approvedDate = new Date(order.approvedAt);
             const expiryDate = new Date(approvedDate);
-            expiryDate.setMonth(expiryDate.getMonth() + item.duration);
+
+            if (item.isTrial) {
+              expiryDate.setDate(expiryDate.getDate() + 15);
+            } else {
+              expiryDate.setMonth(expiryDate.getMonth() + item.duration);
+            }
             const now = new Date();
             const msRemaining = expiryDate.getTime() - now.getTime();
             daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));

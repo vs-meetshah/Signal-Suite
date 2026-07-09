@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useCart } from "@/components/cart-provider";
+import { computeCartItemTotal, getDurationDiscount, useCart } from "@/components/cart-provider";
 import { useAuth } from "@/components/auth-provider";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,15 +21,12 @@ const getDurationLabel = (duration?: number | null, isTrial?: boolean | null, pr
   return duration === 1 ? "1 Month" : `${duration} Months`;
 };
 
-const getItemTotal = (item: { price: string; duration: number; isTrial: boolean }) => {
-  if (item.isTrial) return parseFloat(item.price);
-  return parseFloat(item.price) * item.duration;
-};
-
 const formatPrice = (value: number) => {
   if (value === 0) return "Free";
   return `₹${Number(value).toLocaleString("en-IN")}`;
 };
+
+const formatDiscount = (discount: number) => `${Math.round(discount * 100)}% off`;
 
 export default function CartPage() {
   const { items, removeItem, totalPrice, clearCart } = useCart();
@@ -93,8 +90,12 @@ export default function CartPage() {
           <div className="flex-1 space-y-4" data-testid="cart-items">
             <AnimatePresence mode="popLayout">
               {items.map((item) => {
-                const itemTotal = getItemTotal(item);
+                const itemTotal = computeCartItemTotal(item);
                 const isFree = !item.isTrial && parseFloat(item.price) === 0;
+                const monthlyPrice = parseFloat(item.price) || 0;
+                const originalTotal = monthlyPrice * item.duration;
+                const discount = !item.isTrial && !isFree ? getDurationDiscount(item.duration) : 0;
+                const savings = discount > 0 ? Math.max(0, originalTotal - itemTotal) : 0;
 
                 return (
                   <motion.div
@@ -135,14 +136,21 @@ export default function CartPage() {
                                   Free
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs">
-                                  <Tag className="mr-1 h-3 w-3" /> ₹{Number(item.price).toLocaleString("en-IN")}/mo
-                                </Badge>
+                                <>
+                                  <Badge variant="outline" className="text-xs">
+                                    <Tag className="mr-1 h-3 w-3" /> ₹{Number(item.price).toLocaleString("en-IN")}/mo
+                                  </Badge>
+                                  {discount > 0 && (
+                                    <Badge className="border-emerald-500/20 bg-emerald-500/15 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400">
+                                      {formatDiscount(discount)}
+                                    </Badge>
+                                  )}
+                                </>
                               )}
                             </div>
 
                             <p className="mt-1 text-sm text-muted-foreground">
-                              Selected plan summary. To change duration or plan type, remove this item and add it again.
+                              To change plan or duration, remove this item and add it again.
                             </p>
                           </div>
 
@@ -182,19 +190,35 @@ export default function CartPage() {
                             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               Amount
                             </p>
-                            <p
-                              className={`mt-1 text-sm font-semibold ${
-                                isFree ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
-                              }`}
-                              data-testid={`text-item-total-${item.indicatorId}`}
-                            >
-                              {formatPrice(itemTotal)}
-                            </p>
-
-                            {!item.isTrial && !isFree && item.duration > 1 && (
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-                                ₹{Number(item.price).toLocaleString("en-IN")} x {item.duration} months
+                            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                              <p
+                                className={`text-sm font-semibold ${
+                                  isFree ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                                }`}
+                                data-testid={`text-item-total-${item.indicatorId}`}
+                              >
+                                {formatPrice(itemTotal)}
                               </p>
+                              {!item.isTrial && !isFree && discount > 0 && (
+                                <p className="text-xs text-muted-foreground line-through">
+                                  {formatPrice(originalTotal)}
+                                </p>
+                              )}
+                            </div>
+
+                            {!item.isTrial && !isFree && (
+                              <>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  ₹{Number(item.price).toLocaleString("en-IN")} x {item.duration} month{item.duration > 1 ? "s" : ""}
+                                </p>
+                                {discount > 0 && savings > 0 && (
+                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium">
+                                    <span className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3 py-1.5 font-semibold text-emerald-700 shadow-sm shadow-emerald-500/10 dark:border-emerald-500/30 dark:bg-emerald-500/12 dark:text-emerald-400">
+                                      You save {formatPrice(savings)}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -219,7 +243,7 @@ export default function CartPage() {
 
               <div className="space-y-3">
                 {items.map((item) => {
-                  const itemTotal = getItemTotal(item);
+                  const itemTotal = computeCartItemTotal(item);
 
                   return (
                     <div key={item.indicatorId} className="flex items-start justify-between gap-3 text-sm">
@@ -243,7 +267,7 @@ export default function CartPage() {
               <div className="flex items-center justify-between">
                 <span className="font-semibold">Total</span>
                 <span className="text-xl font-bold" data-testid="text-total-price">
-                  ₹{totalPrice.toLocaleString("en-IN")}
+                  {formatPrice(totalPrice)}
                 </span>
               </div>
 

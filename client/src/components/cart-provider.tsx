@@ -18,6 +18,29 @@ export interface CartItem {
   version: ProductVersion;
 }
 
+const DURATION_DISCOUNTS: Record<number, number> = {
+  1: 0.03,
+  3: 0.06,
+  6: 0.09,
+  9: 0.12,
+  12: 0.24,
+};
+
+export function getDurationDiscount(months: number): number {
+  return DURATION_DISCOUNTS[months] ?? 0;
+}
+
+export function computeCartItemTotal(item: Pick<CartItem, "price" | "duration" | "isTrial">): number {
+  if (item.isTrial) return parseFloat(item.price);
+
+  const monthly = parseFloat(item.price) || 0;
+  const duration = item.duration && item.duration > 0 ? item.duration : 1;
+  const original = monthly * duration;
+  const discount = monthly > 0 ? getDurationDiscount(duration) : 0;
+
+  return Math.round(original * (1 - discount));
+}
+
 export function computeStrategyPrice(indicatorPrice: string): string {
   const p = parseFloat(indicatorPrice);
   if (p === 0) return "499";
@@ -125,10 +148,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const totalPrice = items.reduce((sum, item) => {
-    if (item.isTrial) return sum + parseFloat(item.price);
-    return sum + parseFloat(item.price) * item.duration;
-  }, 0);
+  const totalPrice = items.reduce((sum, item) => sum + computeCartItemTotal(item), 0);
 
   const itemCount = items.length;
 
