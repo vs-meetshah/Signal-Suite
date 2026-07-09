@@ -10,13 +10,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import type { InsertUser } from "@shared/schema";
-import { useCart } from "@/components/cart-provider";
+import { computeCartItemTotal, getDurationDiscount, useCart } from "@/components/cart-provider";
 import { useAuth } from "@/components/auth-provider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+declare global {
+  interface Window {
+    Razorpay?: any;
+  }
+}
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
@@ -66,17 +71,63 @@ export default function Checkout() {
         items: items.map((item) => ({
           indicatorId: item.indicatorId,
           duration: item.duration,
-          price: item.isTrial ? "0" : (parseFloat(item.price) * item.duration).toFixed(2),
           isTrial: item.isTrial,
+          version: item.version,
         })),
       };
 
-      await apiRequest("POST", "/api/orders", orderData);
+      const createRes = await apiRequest("POST", "/api/razorpay/create-order", orderData);
+      const razorpayOrder = await createRes.json();
+
+      if (!window.Razorpay) {
+        throw new Error("Razorpay checkout script not loaded");
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const razorpay = new window.Razorpay({
+          key: razorpayOrder.keyId,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: "Pine Signal Lab",
+          description: "Trading indicator access",
+          order_id: razorpayOrder.razorpayOrderId,
+          prefill: {
+            name: `${data.firstName} ${data.lastName}`,
+            email: data.email,
+            contact: data.mobileNumber,
+          },
+          theme: {
+            color: "#2563eb",
+          },
+          handler: async (response: any) => {
+            try {
+              await apiRequest("POST", "/api/razorpay/verify-payment", {
+                ...response,
+                items: orderData.items,
+              });
+
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              reject(new Error("Payment cancelled"));
+            },
+          },
+        });
+
+        razorpay.open();
+      });
     },
     onSuccess: () => {
       clearCart();
       setOrderComplete(true);
-      toast({ title: "Order submitted", description: "Your order has been placed successfully." });
+      toast({
+        title: "Payment successful",
+        description: "Your order has been submitted for approval.",
+      });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -95,9 +146,11 @@ export default function Checkout() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="mt-6 text-2xl font-bold" data-testid="text-order-complete">Order Submitted</h2>
+          <h2 className="mt-6 text-2xl font-bold" data-testid="text-order-complete">
+            Payment Successful
+          </h2>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            Your order has been received. You will receive a confirmation email with instructions to access your indicators on TradingView. You'll get indicator access within 24 hours.
+            Your payment has been received. Your order is now submitted for approval. You'll get indicator access within 24 hours after approval.
           </p>
           <p className="mt-2 text-muted-foreground leading-relaxed">
             Check your order status in <Link href="/dashboard" className="font-medium text-primary hover:underline">Profile → Dashboard</Link>, and feel free to contact Help/Support desk directly from there if you face any issues.
@@ -118,6 +171,13 @@ export default function Checkout() {
       </div>
     );
   }
+
+  const originalTotal = items.reduce((sum, item) => {
+    if (item.isTrial) return sum + Number(item.price || 0);
+    return sum + (Number(item.price || 0) * item.duration);
+  }, 0);
+
+  const totalSavings = Math.max(0, originalTotal - totalPrice);
 
   const formFields = [
     { name: "firstName" as const, label: "First Name", placeholder: "John", icon: User, type: "text" },
@@ -268,35 +328,79 @@ export default function Checkout() {
               <h3 className="text-base font-semibold">Order Summary</h3>
               <Separator className="my-4" />
 
-              <div className="space-y-3">
-                {items.map((item) => (
-                  <div key={item.indicatorId} className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="truncate mr-2 font-medium">{item.name}</span>
-                      <span className="shrink-0">
-                        {item.isTrial ? (
-                          <span className="text-sm font-medium">₹{Number(item.price).toLocaleString("en-IN")}</span>
-                        ) : (
-                          `₹${(parseFloat(item.price) * item.duration).toLocaleString("en-IN")}`
-                        )}
-                      </span>
+              <div className="space-y-4">
+                {items.map((item) => {
+                  const monthlyPrice = Number(item.price || 0);
+                  const original = item.isTrial ? monthlyPrice : monthlyPrice * item.duration;
+                  const finalPrice = computeCartItemTotal(item);
+                  const itemSavings = Math.max(0, original - finalPrice);
+                  const discount = item.isTrial ? 0 : getDurationDiscount(item.duration);
+
+                  return (
+                    <div key={item.indicatorId} className="flex flex-col gap-1.5">
+                      <div className="flex items-start justify-between gap-3 text-sm">
+                        <div className="min-w-0">
+                          <span className="block truncate font-medium">{item.name}</span>
+                          {item.isTrial ? (
+                            <p className="mt-0.5 text-xs text-muted-foreground">15-day trial</p>
+                          ) : (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {item.duration} month{item.duration !== 1 ? "s" : ""} x ₹
+                              {monthlyPrice.toLocaleString("en-IN")}/mo
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          {itemSavings > 0 && (
+                            <p className="text-xs text-muted-foreground line-through">
+                              ₹{original.toLocaleString("en-IN")}
+                            </p>
+                          )}
+                          <p className="font-semibold">₹{finalPrice.toLocaleString("en-IN")}</p>
+                        </div>
+                      </div>
+
+                      {itemSavings > 0 && (
+                        <div className="flex items-center justify-between rounded-md bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-400">
+                          <span>{Math.round(discount * 100)}% discount applied</span>
+                          <span className="font-semibold">
+                            You save ₹{itemSavings.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    {item.isTrial ? (
-                      <p className="text-xs text-muted-foreground">15-day trial</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        {item.duration} month{item.duration !== 1 ? "s" : ""} x ₹{Number(item.price).toLocaleString("en-IN")}/mo
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <Separator className="my-4" />
 
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">Total</span>
-                <span className="text-xl font-bold" data-testid="text-checkout-total">₹{totalPrice.toLocaleString("en-IN")}</span>
+              <div className="space-y-2">
+                {totalSavings > 0 && (
+                  <>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Original total</span>
+                      <span className="line-through">
+                        ₹{originalTotal.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm text-emerald-700 dark:text-emerald-400">
+                      <span>You save</span>
+                      <span className="font-semibold">
+                        ₹{totalSavings.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Total</span>
+                  <span className="text-xl font-bold" data-testid="text-checkout-total">
+                    ₹{totalPrice.toLocaleString("en-IN")}
+                  </span>
+                </div>
               </div>
             </Card>
           </div>

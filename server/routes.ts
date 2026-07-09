@@ -3,12 +3,37 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, updateUserProfileSchema, insertIndicatorSchema } from "@shared/schema";
 import { seedDatabase } from "./seed";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+
+const DURATION_DISCOUNTS: Record<number, number> = {
+  1: 0.03,
+  3: 0.06,
+  6: 0.09,
+  9: 0.12,
+  12: 0.24,
+};
+
+function getDurationDiscount(months: number): number {
+  return DURATION_DISCOUNTS[months] ?? 0;
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   await seedDatabase();
+
+  const razorpayKeyId = process.env.RAZORPAY_KEY_ID || "";
+  const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || "";
+
+  const razorpay =
+    razorpayKeyId && razorpayKeySecret
+      ? new Razorpay({
+        key_id: razorpayKeyId,
+        key_secret: razorpayKeySecret,
+      })
+      : null;
 
   app.get("/api/indicators", async (_req, res) => {
     const indicators = await storage.getIndicators();
@@ -667,6 +692,198 @@ export async function registerRoutes(
     );
 
     res.json(ordersWithItems);
+  });
+
+  async function validateOrderItems(items: any[]) {
+    let serverTotal = 0;
+    const validatedItems = [];
+
+    for (const item of items) {
+      const indicator = await storage.getIndicatorById(item.indicatorId);
+
+      if (!indicator) {
+        throw new Error(`Indicator ${item.indicatorId} not found`);
+      }
+
+      const duration = Math.max(1, Math.min(12, parseInt(item.duration) || 1));
+      const isTrial = item.isTrial === true && indicator.tier === "premium";
+
+      const version: "indicator" | "strategy" | "both" =
+        item.version === "strategy"
+          ? "strategy"
+          : item.version === "both"
+            ? "both"
+            : "indicator";
+
+      const indicatorBase = parseFloat(indicator.price);
+      const strategyBase = indicatorBase === 0 ? 499 : Math.round(indicatorBase * 1.35);
+
+      const baseUnit =
+        version === "strategy"
+          ? strategyBase
+          : version === "both"
+            ? indicatorBase + strategyBase
+            : indicatorBase;
+
+      let price: string;
+
+      if (isTrial) {
+        const trialIndicator = 5250;
+        const trialStrategy = Math.round(5250 * 1.35);
+
+        price =
+          version === "strategy"
+            ? trialStrategy.toFixed(2)
+            : version === "both"
+              ? (trialIndicator + trialStrategy).toFixed(2)
+              : trialIndicator.toFixed(2);
+      } else {
+        const original = baseUnit * duration;
+        const discount = baseUnit > 0 ? getDurationDiscount(duration) : 0;
+        const discountedTotal = Math.round(original * (1 - discount));
+
+        price = discountedTotal.toFixed(2);
+      }
+
+      serverTotal += parseFloat(price);
+
+      validatedItems.push({
+        indicatorId: indicator.id,
+        duration,
+        price,
+        isTrial,
+        version,
+      });
+    }
+
+    return {
+      serverTotal,
+      validatedItems,
+    };
+  }
+
+  app.post("/api/razorpay/create-order", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    if (!razorpay) {
+      return res.status(500).json({ message: "Razorpay is not configured" });
+    }
+
+    const user = await storage.getUserById(req.session.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (user.isAdmin) {
+      return res.status(403).json({ message: "Admins cannot place orders" });
+    }
+
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Invalid order data" });
+    }
+
+    try {
+      const { serverTotal } = await validateOrderItems(items);
+
+      if (serverTotal <= 0) {
+        return res.status(400).json({ message: "Invalid order amount" });
+      }
+
+      const razorpayOrder = await razorpay.orders.create({
+        amount: Math.round(serverTotal * 100),
+        currency: "INR",
+        receipt: `order_${req.session.userId}_${Date.now()}`,
+        notes: {
+          userId: String(req.session.userId),
+        },
+      });
+
+      res.json({
+        keyId: razorpayKeyId,
+        razorpayOrderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        totalAmount: serverTotal.toFixed(2),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create Razorpay order";
+      res.status(400).json({ message });
+    }
+  });
+
+  app.post("/api/razorpay/verify-payment", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const user = await storage.getUserById(req.session.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (user.isAdmin) {
+      return res.status(403).json({ message: "Admins cannot place orders" });
+    }
+
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      items,
+    } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: "Missing Razorpay payment details" });
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Invalid order data" });
+    }
+
+    const expectedSignature = crypto
+      .createHmac("sha256", razorpayKeySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    try {
+      const { serverTotal, validatedItems } = await validateOrderItems(items);
+
+      const order = await storage.createOrder({
+        userId: req.session.userId,
+        status: "pending",
+        totalAmount: serverTotal.toFixed(2),
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        paymentStatus: "paid",
+        paidAt: new Date(),
+      });
+
+      for (const vi of validatedItems) {
+        await storage.createOrderItem({
+          orderId: order.id,
+          ...vi,
+        });
+      }
+
+      res.status(201).json({
+        order,
+        razorpayPaymentId: razorpay_payment_id,
+        message: "Payment verified and order submitted",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save order";
+      res.status(400).json({ message });
+    }
   });
 
   app.post("/api/orders", async (req, res) => {

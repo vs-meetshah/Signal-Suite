@@ -38,6 +38,12 @@ interface AdminOrderItem {
 interface AdminOrder {
   id: number; userId: number; status: string; totalAmount: string;
   rejectionReason: string | null; createdAt: string; approvedAt: string | null;
+
+  razorpayOrderId: string | null;
+  razorpayPaymentId: string | null;
+  paymentStatus: string | null;
+  paidAt: string | null;
+
   items: AdminOrderItem[];
 }
 
@@ -102,15 +108,20 @@ interface TodayRequest {
 
 function buildTodayRequests(users: AdminUser[] | undefined): TodayRequest[] {
   if (!users) return [];
+
   const out: TodayRequest[] = [];
+
   for (const user of users) {
     for (const order of user.orders) {
       if (order.status !== "pending") continue;
-      if (!isToday(order.createdAt)) continue;
+
+      // Show every pending order, even if admin missed it yesterday/earlier.
       out.push({ user, order });
     }
   }
+
   out.sort((a, b) => new Date(b.order.createdAt).getTime() - new Date(a.order.createdAt).getTime());
+
   return out;
 }
 
@@ -163,8 +174,8 @@ function downloadTodayRequestsCSV(requests: TodayRequest[]) {
       .join(" | ");
     const earliestEnd = r.order.items.length > 0
       ? r.order.items
-          .map((it) => calculateEndDate(r.order.createdAt, it.duration, it.isTrial).getTime())
-          .reduce((a, b) => Math.min(a, b))
+        .map((it) => calculateEndDate(r.order.createdAt, it.duration, it.isTrial).getTime())
+        .reduce((a, b) => Math.min(a, b))
       : null;
     return [
       idx + 1,
@@ -280,7 +291,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Today's New Requests */}
+      {/* Pending Approval Requests */}
       <TodayRequestsPanel
         requests={todayRequests}
         dateLabel={todayDateLabel}
@@ -458,6 +469,36 @@ function UserDetailContent({
                     </span>
                   </div>
 
+                  <div className="border-b bg-emerald-500/5 px-3 py-2" data-testid={`detail-payment-${order.id}`}>
+                    <div className="grid grid-cols-1 gap-1 text-[10px] sm:grid-cols-2">
+                      <div>
+                        <span className="text-muted-foreground">Payment:</span>{" "}
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                          {order.paymentStatus === "paid" ? "Paid" : order.paymentStatus || "Pending"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-muted-foreground">Paid At:</span>{" "}
+                        <span>{formatDate(order.paidAt)}</span>
+                      </div>
+
+                      {order.razorpayPaymentId && (
+                        <div className="sm:col-span-2">
+                          <span className="text-muted-foreground">Razorpay Payment ID:</span>{" "}
+                          <span className="font-mono break-all">{order.razorpayPaymentId}</span>
+                        </div>
+                      )}
+
+                      {order.razorpayOrderId && (
+                        <div className="sm:col-span-2">
+                          <span className="text-muted-foreground">Razorpay Order ID:</span>{" "}
+                          <span className="font-mono break-all">{order.razorpayOrderId}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {order.status === "rejected" && order.rejectionReason && (
                     <div className="border-b bg-red-500/5 px-3 py-2" data-testid={`detail-rejection-${order.id}`}>
                       <div className="flex items-start gap-1.5">
@@ -545,8 +586,8 @@ function StatCard({
   const toneClass = tone === "emerald"
     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
     : tone === "amber"
-    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-    : "bg-primary/10 text-primary";
+      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+      : "bg-primary/10 text-primary";
   return (
     <Card className="border-card-border p-2.5" data-testid={testId}>
       <div className="flex items-center gap-2.5">
@@ -607,7 +648,7 @@ function TodayRequestsPanel({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-bold tracking-tight sm:text-lg" data-testid="text-today-title">
-                Today's New Requests
+                Pending Approval Requests
               </h2>
               <Badge
                 variant="outline"
@@ -635,7 +676,7 @@ function TodayRequestsPanel({
           data-testid="button-download-today-csv"
         >
           <Download className="h-4 w-4" />
-          Download Today's Order List
+          Download Pending Order List
         </Button>
       </div>
 
@@ -654,7 +695,7 @@ function TodayRequestsPanel({
             <CheckCircle2 className="h-8 w-8 text-emerald-500" />
             <p className="mt-3 text-sm font-medium">No new requests today</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              You're all caught up. New access requests submitted today will appear here.
+              You're all caught up. Paid orders waiting for approval will appear here.
             </p>
           </Card>
         ) : (
@@ -698,6 +739,15 @@ function TodayRequestsPanel({
                           <Hourglass className="mr-1 h-3 w-3" />
                           Pending
                         </Badge>
+                        {!isToday(r.order.createdAt) && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                            data-testid={`order-overdue-${orderId}`}
+                          >
+                            Missed earlier
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-sm">
                         <span className="flex items-center gap-1 text-muted-foreground" data-testid={`order-date-${orderId}`}>
@@ -808,11 +858,10 @@ function TodayRequestsPanel({
                                 <div className="mt-1 flex flex-wrap items-center gap-1">
                                   <Badge
                                     variant="outline"
-                                    className={`text-[10px] uppercase tracking-wide ${
-                                      item.version === "strategy"
-                                        ? "border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                                        : "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                    }`}
+                                    className={`text-[10px] uppercase tracking-wide ${item.version === "strategy"
+                                      ? "border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                                      : "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                      }`}
                                   >
                                     {versionLabel(item.version)}
                                   </Badge>
@@ -964,7 +1013,7 @@ function TodayRequestsPanel({
                             </p>
                             <div className="flex flex-col gap-1">
                               {items.map((it) => {
-                                const itEnd = calculateEndDate(r.order.createdAt, it.duration, it.isTrial);
+                                const itEnd = calculateEndDate(new Date().toISOString(), it.duration, it.isTrial);
                                 return (
                                   <div
                                     key={it.id}
