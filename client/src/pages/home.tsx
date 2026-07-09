@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { motion, useInView, animate } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { IndicatorCard } from "@/components/indicator-card";
 import { Input } from "@/components/ui/input";
@@ -73,6 +73,26 @@ const keyFeatures = [
   },
 ];
 
+function LazyHomeSection({
+  children,
+  minHeight = 480,
+}: {
+  children: ReactNode;
+  minHeight?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, {
+    once: true,
+    margin: "600px 0px",
+  });
+
+  return (
+    <div ref={ref} style={!inView ? { minHeight } : undefined}>
+      {inView ? children : null}
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <div className="min-h-screen">
@@ -86,7 +106,12 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="max-w-3xl"
           >
-            <Badge variant="secondary" className="mb-6" data-testid="badge-hero">
+            <Badge
+              variant="secondary"
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary"
+              data-testid="badge-hero"
+            >
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Premium TradingView Indicators
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
@@ -94,7 +119,7 @@ export default function Home() {
               <span className="text-primary"> Trading Edge</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed" data-testid="text-hero-subtitle">
-              Access institutional-grade TradingView indicators designed by professional traders. 
+              Access institutional-grade TradingView indicators designed by professional traders.
               Backtested, optimized, and ready to deploy on your charts.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -115,15 +140,25 @@ export default function Home() {
 
       <KeyFeatures />
 
-      <SystemFramework />
+      <LazyHomeSection minHeight={720}>
+        <SystemFramework />
+      </LazyHomeSection>
 
-      <IndicatorMarquee />
+      <LazyHomeSection minHeight={620}>
+        <IndicatorMarquee />
+      </LazyHomeSection>
 
-      <ProvenPerformance />
+      <LazyHomeSection minHeight={620}>
+        <ProvenPerformance />
+      </LazyHomeSection>
 
-      <Testimonials />
+      <LazyHomeSection minHeight={560}>
+        <Testimonials />
+      </LazyHomeSection>
 
-      <PricingPlans />
+      <LazyHomeSection minHeight={720}>
+        <PricingPlans />
+      </LazyHomeSection>
 
       <section className="border-t">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -132,7 +167,7 @@ export default function Home() {
               Ready to Transform Your Trading?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Start with a free trial on any indicator. No credit card required. 
+              Start with a free trial on any indicator. No credit card required.
               See the results on your own charts before committing.
             </p>
             <div className="mt-8">
@@ -176,6 +211,10 @@ export default function Home() {
                 <img
                   src={supportWomanImg}
                   alt="Pine Signal Lab community support representative"
+                  loading="lazy"
+                  decoding="async"
+                  width={448}
+                  height={448}
                   className="h-72 w-auto object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] sm:h-80 md:h-96 lg:h-[28rem]"
                   data-testid="img-connect-support"
                 />
@@ -222,8 +261,15 @@ export default function Home() {
 }
 
 function IndicatorMarquee() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const inView = useInView(sectionRef, {
+    once: true,
+    margin: "500px 0px",
+  });
+
   const { data: indicators, isLoading } = useQuery<Indicator[]>({
     queryKey: ["/api/indicators"],
+    enabled: inView,
   });
 
   const items = (indicators ?? []).slice(0, 12);
@@ -236,6 +282,7 @@ function IndicatorMarquee() {
 
   return (
     <section
+      ref={sectionRef}
       className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black py-16 sm:py-20"
       data-testid="section-indicator-marquee"
     >
@@ -600,18 +647,16 @@ function PricingPlans() {
                 )}
 
                 <div
-                  className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border p-7 transition-all duration-300 ${
-                    isPopular
-                      ? "border-primary/50 bg-gradient-to-b from-primary/[0.08] via-zinc-900 to-zinc-950 shadow-[0_0_60px_-15px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_80px_-15px_hsl(var(--primary)/0.65)]"
-                      : "border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]"
-                  }`}
+                  className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border p-7 transition-all duration-300 ${isPopular
+                    ? "border-primary/50 bg-gradient-to-b from-primary/[0.08] via-zinc-900 to-zinc-950 shadow-[0_0_60px_-15px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_80px_-15px_hsl(var(--primary)/0.65)]"
+                    : "border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]"
+                    }`}
                 >
                   <div
-                    className={`pointer-events-none absolute inset-x-7 -top-px h-px ${
-                      isPopular
-                        ? "bg-gradient-to-r from-transparent via-primary to-transparent opacity-80"
-                        : "bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50"
-                    }`}
+                    className={`pointer-events-none absolute inset-x-7 -top-px h-px ${isPopular
+                      ? "bg-gradient-to-r from-transparent via-primary to-transparent opacity-80"
+                      : "bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50"
+                      }`}
                   />
 
                   <div className="mb-5">
@@ -645,11 +690,10 @@ function PricingPlans() {
                           data-testid={`feature-${plan.name.toLowerCase()}-${fi}`}
                         >
                           <span
-                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                              isPopular
-                                ? "bg-primary/15 text-primary"
-                                : "bg-white/5 text-zinc-300"
-                            }`}
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${isPopular
+                              ? "bg-primary/15 text-primary"
+                              : "bg-white/5 text-zinc-300"
+                              }`}
                           >
                             <FIcon className="h-3.5 w-3.5" strokeWidth={2.6} />
                           </span>
@@ -663,11 +707,10 @@ function PricingPlans() {
                     <Button
                       asChild
                       size="lg"
-                      className={`w-full ${
-                        isPopular
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30"
-                          : "bg-white/5 text-white hover:bg-white/10 border border-white/15"
-                      }`}
+                      className={`w-full ${isPopular
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30"
+                        : "bg-white/5 text-white hover:bg-white/10 border border-white/15"
+                        }`}
                       data-testid={`button-plan-${plan.name.toLowerCase()}`}
                     >
                       <Link href="/indicators" aria-label={`${plan.cta} with the ${plan.name} plan`}>
@@ -1240,13 +1283,13 @@ const performanceStats: {
   decimals?: number;
   tone: "positive" | "negative" | "neutral";
 }[] = [
-  { label: "Monthly Return", value: 18.47, prefix: "+", suffix: "%", decimals: 2, tone: "positive" },
-  { label: "Max Drawdown", value: -6.21, suffix: "%", decimals: 2, tone: "negative" },
-  { label: "Total Trades", value: 124, decimals: 0, tone: "neutral" },
-  { label: "Win Rate", value: 78.23, suffix: "%", decimals: 2, tone: "neutral" },
-  { label: "Profit Factor", value: 2.34, decimals: 2, tone: "neutral" },
-  { label: "Sharpe Ratio", value: 1.82, decimals: 2, tone: "neutral" },
-];
+    { label: "Monthly Return", value: 18.47, prefix: "+", suffix: "%", decimals: 2, tone: "positive" },
+    { label: "Max Drawdown", value: -6.21, suffix: "%", decimals: 2, tone: "negative" },
+    { label: "Total Trades", value: 124, decimals: 0, tone: "neutral" },
+    { label: "Win Rate", value: 78.23, suffix: "%", decimals: 2, tone: "neutral" },
+    { label: "Profit Factor", value: 2.34, decimals: 2, tone: "neutral" },
+    { label: "Sharpe Ratio", value: 1.82, decimals: 2, tone: "neutral" },
+  ];
 
 const recentTrades = [
   { time: "15 May, 10:32 AM", asset: "NIFTY 50", type: "BUY", result: 1.85, rr: "1:2.1" },
@@ -1418,13 +1461,12 @@ function ProvenPerformance() {
                   {s.label}
                 </div>
                 <div
-                  className={`mt-1.5 text-lg font-bold tabular-nums ${
-                    s.tone === "positive"
-                      ? "text-emerald-300"
-                      : s.tone === "negative"
+                  className={`mt-1.5 text-lg font-bold tabular-nums ${s.tone === "positive"
+                    ? "text-emerald-300"
+                    : s.tone === "negative"
                       ? "text-rose-400"
                       : "text-white"
-                  }`}
+                    }`}
                 >
                   <AnimatedNumber
                     to={s.value}
@@ -1472,19 +1514,17 @@ function ProvenPerformance() {
                       <td className="py-2.5 pr-3 font-medium text-white">{t.asset}</td>
                       <td className="py-2.5 pr-3">
                         <span
-                          className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                            t.type === "BUY"
-                              ? "bg-emerald-500/15 text-emerald-300"
-                              : "bg-rose-500/15 text-rose-300"
-                          }`}
+                          className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${t.type === "BUY"
+                            ? "bg-emerald-500/15 text-emerald-300"
+                            : "bg-rose-500/15 text-rose-300"
+                            }`}
                         >
                           {t.type}
                         </span>
                       </td>
                       <td
-                        className={`py-2.5 pr-3 font-semibold tabular-nums ${
-                          t.result >= 0 ? "text-emerald-300" : "text-rose-400"
-                        }`}
+                        className={`py-2.5 pr-3 font-semibold tabular-nums ${t.result >= 0 ? "text-emerald-300" : "text-rose-400"
+                          }`}
                       >
                         {t.result >= 0 ? "+" : ""}
                         {t.result.toFixed(2)}%

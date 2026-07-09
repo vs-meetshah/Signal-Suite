@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowRight, Check, ShoppingCart, Star, Bookmark, Flame, Sparkles, TrendingUp } from "lucide-react";
+import { Check, ShoppingCart, Star, Bookmark, Flame, Sparkles, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,6 @@ export function IndicatorCard({
   };
 
   const stopCardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
   };
 
@@ -289,13 +288,7 @@ export function IndicatorCard({
                         <ShoppingCart className="mr-1 h-3.5 w-3.5" /> Go to Cart
                       </Button>
                     </Link>
-                  ) : (
-                    <Link href={`/indicator/${indicator.slug}`} onClick={stopCardClick}>
-                      <Button variant="ghost" size="sm" className="h-8 px-2 text-primary" data-testid={`button-view-${indicator.id}`}>
-                        View Details <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                      </Button>
-                    </Link>
-                  )}
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="icon"

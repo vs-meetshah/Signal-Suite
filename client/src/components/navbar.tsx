@@ -30,6 +30,7 @@ export function Navbar() {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const cartControls = useAnimation();
+  const hideCartIcon = !!user?.isAdmin;
 
   useEffect(() => {
     const handleCartAdded = () => {
@@ -65,7 +66,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5" data-testid="link-home">
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
-              <TrendingUp className="h-5 w-5 text-primary-foreground" />
+              <TrendingUp className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
             </div>
             <span className="text-lg font-semibold tracking-tight">Pine Signal Lab</span>
           </Link>
@@ -92,27 +93,30 @@ export function Navbar() {
 
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <Link href="/cart">
-              <motion.div animate={cartControls}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative mr-1 rounded-full"
-                  data-testid="button-cart"
-                >
-                  <ShoppingCart className="h-4 w-4" />
+            {!hideCartIcon && (
+              <Link href="/cart">
+                <motion.div animate={cartControls}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative mr-1 min-h-11 min-w-11 rounded-full"
+                    aria-label={`Cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? "" : "s"}` : ""}`}
+                    data-testid="button-cart"
+                  >
+                    <ShoppingCart className="h-4 w-4" aria-hidden="true" />
 
-                  {itemCount > 0 && (
-                    <span
-                      className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground shadow-sm ring-2 ring-background"
-                      data-testid="badge-cart-count"
-                    >
-                      {itemCount > 9 ? "9+" : itemCount}
-                    </span>
-                  )}
-                </Button>
-              </motion.div>
-            </Link>
+                    {itemCount > 0 && (
+                      <span
+                        className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground shadow-sm ring-2 ring-background"
+                        data-testid="badge-cart-count"
+                      >
+                        {itemCount > 9 ? "9+" : itemCount}
+                      </span>
+                    )}
+                  </Button>
+                </motion.div>
+              </Link>
+            )}
 
             {!isLoading && !user && (
               <Button
@@ -129,7 +133,13 @@ export function Navbar() {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full" data-testid="button-user-menu">
+                  <Button
+  variant="ghost"
+  size="icon"
+  className="min-h-11 min-w-11 rounded-full"
+  aria-label="Open user menu"
+  data-testid="button-user-menu"
+>
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
                         {initials}
@@ -180,14 +190,20 @@ export function Navbar() {
               </DropdownMenu>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              data-testid="button-mobile-menu"
-            >
-              {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          <Button
+  variant="ghost"
+  size="icon"
+  className="min-h-11 min-w-11 md:hidden"
+  onClick={() => setMobileOpen(!mobileOpen)}
+  aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+  aria-expanded={mobileOpen}
+  data-testid="button-mobile-menu"
+>
+              {mobileOpen ? (
+  <X className="h-4 w-4" aria-hidden="true" />
+) : (
+  <Menu className="h-4 w-4" aria-hidden="true" />
+)}
             </Button>
           </div>
         </div>
