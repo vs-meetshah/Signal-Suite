@@ -9,9 +9,9 @@ import {
   LayoutDashboard,
   BarChart3,
   Settings2,
+  Users,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
@@ -24,6 +24,10 @@ const NAV_ITEMS: { id: AdminTab; label: string; icon: typeof LayoutDashboard; de
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, description: "Users & order approvals" },
   { id: "analytics", label: "Analytics", icon: BarChart3, description: "Revenue & growth insights" },
   { id: "editor", label: "Editor", icon: Settings2, description: "Indicators & pricing" },
+];
+
+const ADMIN_LINK_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; description: string; testId: string }[] = [
+  { href: "/admin/users", label: "All Users", icon: Users, description: "Manage customer accounts", testId: "nav-all-users" },
 ];
 
 export default function AdminPage() {
@@ -113,6 +117,35 @@ export default function AdminPage() {
                   title={collapsed ? item.label : undefined}
                 >
                   <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="min-w-0 flex-1"
+                      >
+                        <p className="text-sm font-medium leading-tight">{item.label}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{item.description}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+              );
+            })}
+
+            {ADMIN_LINK_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => navigate(item.href)}
+                  className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-foreground transition-colors hover-elevate ${collapsed ? "justify-center" : ""}`}
+                  data-testid={item.testId}
+                  aria-label={item.label}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <AnimatePresence initial={false}>
                     {!collapsed && (
                       <motion.div

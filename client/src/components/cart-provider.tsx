@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 
 export type ProductVersion = "indicator" | "strategy" | "both";
 
@@ -16,6 +16,28 @@ export interface CartItem {
   duration: number;
   isTrial: boolean;
   version: ProductVersion;
+}
+
+export const CART_STORAGE_KEY = "cart";
+export const CART_CLEARED_EVENT = "cart-cleared";
+const GUEST_CART_STORAGE_KEY = `${CART_STORAGE_KEY}:guest`;
+
+function getCartStorageKey(userId: number | null | undefined) {
+  return userId ? `${CART_STORAGE_KEY}:user:${userId}` : GUEST_CART_STORAGE_KEY;
+}
+
+function readStoredCart(storageKey: string): CartItem[] {
+  if (typeof window === "undefined") return [];
+
+  const saved = localStorage.getItem(storageKey);
+  if (!saved) return [];
+
+  try {
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 const DURATION_DISCOUNTS: Record<number, number> = {
@@ -84,18 +106,32 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("cart");
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+export function CartProvider({ children, userId }: { children: ReactNode; userId?: number | null }) {
+  const storageKey = getCartStorageKey(userId);
+  const skipNextPersist = useRef(false);
+  const [items, setItems] = useState<CartItem[]>(() => readStoredCart(storageKey));
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
-  }, [items]);
+    skipNextPersist.current = true;
+    setItems(readStoredCart(storageKey));
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (skipNextPersist.current) {
+      skipNextPersist.current = false;
+      return;
+    }
+    localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
+
+  useEffect(() => {
+    const clearLocalCart = () => {
+      skipNextPersist.current = true;
+      setItems([]);
+    };
+    window.addEventListener(CART_CLEARED_EVENT, clearLocalCart);
+    return () => window.removeEventListener(CART_CLEARED_EVENT, clearLocalCart);
+  }, []);
 
   const evaluateAdd = (prev: CartItem[], indicatorId: number, version: ProductVersion): AddResult => {
     const existingItem = prev.find((i) => i.indicatorId === indicatorId);

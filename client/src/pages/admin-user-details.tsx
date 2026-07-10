@@ -253,9 +253,9 @@ export default function AdminUserDetailsPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/admin">
+            <Link href="/admin/users">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Admin
+              Back to Users
             </Link>
           </Button>
 

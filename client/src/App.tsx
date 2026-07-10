@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/components/cart-provider";
-import { AuthProvider } from "@/components/auth-provider";
+import { AuthProvider, useAuth } from "@/components/auth-provider";
 import { Navbar } from "@/components/navbar";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -55,23 +55,31 @@ function Router() {
   );
 }
 
+function AppShell() {
+  const { user } = useAuth();
+
+  return (
+    <CartProvider userId={user?.id ?? null}>
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar />
+        <main id="main-content">
+          <Router />
+        </main>
+      </div>
+      <Suspense fallback={null}>
+        <AuthModal />
+      </Suspense>
+      <Toaster />
+    </CartProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <CartProvider>
-            <div className="min-h-screen bg-background text-foreground">
-              <Navbar />
-              <main id="main-content">
-                <Router />
-              </main>
-            </div>
-            <Suspense fallback={null}>
-              <AuthModal />
-            </Suspense>
-            <Toaster />
-          </CartProvider>
+          <AppShell />
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

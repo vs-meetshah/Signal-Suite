@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
+import { CART_CLEARED_EVENT } from "@/components/cart-provider";
 import type { User, InsertUser } from "@shared/schema";
 
 interface AuthContextType {
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await apiRequest("POST", "/api/auth/logout");
+    window.dispatchEvent(new Event(CART_CLEARED_EVENT));
     queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
   }, []);
 
