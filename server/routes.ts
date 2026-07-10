@@ -89,7 +89,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/auth/check-email", async (req, res) => {
-    const email = req.query.email as string;
+    const email = String(req.query.email || "").trim().toLowerCase();
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
@@ -108,7 +108,8 @@ export async function registerRoutes(
     }
 
     const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-    const existing = await storage.getUserByEmail(parsed.data.email);
+    const userInput = { ...parsed.data, email: parsed.data.email.trim().toLowerCase() };
+    const existing = await storage.getUserByEmail(userInput.email);
     if (existing) {
       if (adminEmail && existing.email.toLowerCase() === adminEmail && !existing.isAdmin) {
         await storage.setUserAdmin(existing.id, true);
@@ -118,13 +119,57 @@ export async function registerRoutes(
       return res.json({ user: existing, isNewUser: false });
     }
 
-    const user = await storage.createUser(parsed.data);
+    const user = await storage.createUser(userInput);
     if (adminEmail && user.email.toLowerCase() === adminEmail) {
       await storage.setUserAdmin(user.id, true);
       user.isAdmin = true;
     }
     req.session.userId = user.id;
     res.status(201).json({ user, isNewUser: true });
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const existing = await storage.getUserByEmail(email);
+    if (!existing) {
+      return res.status(404).json({ message: "No account found with this email. Please sign up first." });
+    }
+
+    if (adminEmail && existing.email.toLowerCase() === adminEmail && !existing.isAdmin) {
+      await storage.setUserAdmin(existing.id, true);
+      existing.isAdmin = true;
+    }
+
+    req.session.userId = existing.id;
+    res.json({ user: existing });
+  });
+
+  app.post("/api/auth/signup", async (req, res) => {
+    const parsed = insertUserSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Validation failed", errors: parsed.error.flatten() });
+    }
+
+    const userInput = { ...parsed.data, email: parsed.data.email.trim().toLowerCase() };
+    const existing = await storage.getUserByEmail(userInput.email);
+    if (existing) {
+      return res.status(409).json({ message: "An account already exists with this email. Please log in instead." });
+    }
+
+    const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const user = await storage.createUser(userInput);
+    if (adminEmail && user.email.toLowerCase() === adminEmail) {
+      await storage.setUserAdmin(user.id, true);
+      user.isAdmin = true;
+    }
+
+    req.session.userId = user.id;
+    res.status(201).json({ user });
   });
 
   const requireAdmin = async (req: any, res: any, next: any) => {

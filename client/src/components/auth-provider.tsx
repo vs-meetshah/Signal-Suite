@@ -4,13 +4,18 @@ import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { CART_CLEARED_EVENT } from "@/components/cart-provider";
 import type { User, InsertUser } from "@shared/schema";
 
+export type AuthMode = "login" | "signup";
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthModalOpen: boolean;
-  openAuthModal: (options?: { onSuccess?: () => void }) => void;
+  authModalMode: AuthMode;
+  openAuthModal: (options?: { onSuccess?: () => void; mode?: AuthMode }) => void;
   closeAuthModal: () => void;
   authModalOnSuccess: (() => void) | null;
+  login: (email: string) => Promise<{ user: User }>;
+  signup: (data: InsertUser) => Promise<{ user: User }>;
   signupOrLogin: (data: InsertUser) => Promise<{ user: User; isNewUser: boolean }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<InsertUser>) => Promise<User>;
@@ -20,6 +25,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<AuthMode>("login");
   const [authModalOnSuccess, setAuthModalOnSuccess] = useState<(() => void) | null>(null);
 
   const { data: user, isLoading } = useQuery<User | null>({
@@ -27,7 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const openAuthModal = useCallback((options?: { onSuccess?: () => void }) => {
+  const openAuthModal = useCallback((options?: { onSuccess?: () => void; mode?: AuthMode }) => {
+    setAuthModalMode(options?.mode ?? "login");
     setAuthModalOnSuccess(() => options?.onSuccess ?? null);
     setIsAuthModalOpen(true);
   }, []);
@@ -35,6 +42,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const closeAuthModal = useCallback(() => {
     setIsAuthModalOpen(false);
     setAuthModalOnSuccess(null);
+  }, []);
+
+  const login = useCallback(async (email: string) => {
+    const res = await apiRequest("POST", "/api/auth/login", { email });
+    const result = await res.json();
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    return result;
+  }, []);
+
+  const signup = useCallback(async (data: InsertUser) => {
+    const res = await apiRequest("POST", "/api/auth/signup", data);
+    const result = await res.json();
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    return result;
   }, []);
 
   const signupOrLogin = useCallback(async (data: InsertUser) => {
@@ -63,9 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user ?? null,
         isLoading,
         isAuthModalOpen,
+        authModalMode,
         openAuthModal,
         closeAuthModal,
         authModalOnSuccess,
+        login,
+        signup,
         signupOrLogin,
         logout,
         updateProfile,

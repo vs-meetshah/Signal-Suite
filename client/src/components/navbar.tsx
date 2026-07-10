@@ -138,49 +138,62 @@ export function Navbar() {
             })}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-              <ThemeToggle />
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="flex items-center gap-1 md:border-r md:border-border/70 md:pr-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground">
+                <ThemeToggle />
+              </div>
+
+              {!hideCartIcon && (
+                <Link href="/cart">
+                  <motion.div animate={cartControls}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative h-9 w-9 rounded-xl text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                      aria-label={`Cart${itemCount > 0
+                        ? ` with ${itemCount} item${itemCount === 1 ? "" : "s"}`
+                        : ""
+                        }`}
+                      data-testid="button-cart"
+                    >
+                      <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
+
+                      {itemCount > 0 && (
+                        <span
+                          className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground shadow-sm ring-2 ring-background"
+                          data-testid="badge-cart-count"
+                        >
+                          {itemCount > 9 ? "9+" : itemCount}
+                        </span>
+                      )}
+                    </Button>
+                  </motion.div>
+                </Link>
+              )}
             </div>
 
-            {!hideCartIcon && (
-              <Link href="/cart">
-                <motion.div animate={cartControls}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative h-9 w-9 rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    aria-label={`Cart${itemCount > 0
-                      ? ` with ${itemCount} item${itemCount === 1 ? "" : "s"}`
-                      : ""
-                      }`}
-                    data-testid="button-cart"
-                  >
-                    <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
-
-                    {itemCount > 0 && (
-                      <span
-                        className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground shadow-sm ring-2 ring-background"
-                        data-testid="badge-cart-count"
-                      >
-                        {itemCount > 9 ? "9+" : itemCount}
-                      </span>
-                    )}
-                  </Button>
-                </motion.div>
-              </Link>
-            )}
-
             {!isLoading && !user && (
-              <Button
-                variant="default"
-                size="sm"
-                className="hidden rounded-full px-5 md:inline-flex"
-                onClick={() => openAuthModal()}
-                data-testid="button-signup"
-              >
-                Sign Up
-              </Button>
+              <div className="hidden items-center gap-2 md:flex">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 rounded-xl px-4 text-sm font-semibold text-foreground/80 hover:bg-muted/70 hover:text-foreground"
+                  onClick={() => openAuthModal({ mode: "login" })}
+                  data-testid="button-login"
+                >
+                  Log In
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-9 rounded-xl px-5 text-sm font-semibold shadow-sm shadow-primary/20"
+                  onClick={() => openAuthModal({ mode: "signup" })}
+                  data-testid="button-signup"
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
 
             {user && (
@@ -317,17 +330,31 @@ export function Navbar() {
             })}
 
             {!isLoading && !user && (
-              <Button
-                size="sm"
-                className="mt-2 w-full justify-start rounded-xl"
-                onClick={() => {
-                  setMobileOpen(false);
-                  openAuthModal();
-                }}
-                data-testid="button-mobile-signup"
-              >
-                Sign Up
-              </Button>
+              <div className="mt-2 grid gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start rounded-xl"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openAuthModal({ mode: "login" });
+                  }}
+                  data-testid="button-mobile-login"
+                >
+                  Log In
+                </Button>
+                <Button
+                  size="sm"
+                  className="w-full justify-start rounded-xl"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openAuthModal({ mode: "signup" });
+                  }}
+                  data-testid="button-mobile-signup"
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
 
             {user && (

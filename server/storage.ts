@@ -6,7 +6,7 @@ import {
   type OrderItem, type InsertOrderItem
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getIndicators(): Promise<Indicator[]>;
@@ -70,7 +70,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [result] = await db.select().from(users).where(eq(users.email, email));
+    const normalizedEmail = email.trim().toLowerCase();
+    const [result] = await db.select().from(users).where(sql`lower(${users.email}) = ${normalizedEmail}`);
     return result;
   }
 
@@ -80,7 +81,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [result] = await db.insert(users).values(user).returning();
+    const [result] = await db.insert(users).values({
+      ...user,
+      email: user.email.trim().toLowerCase(),
+    }).returning();
     return result;
   }
 
