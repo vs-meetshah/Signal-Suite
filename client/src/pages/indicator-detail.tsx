@@ -1174,7 +1174,11 @@ export default function IndicatorDetail() {
       </div>
       {/* Pricing Dialog */}
       {isMobilePricing ? (
-        <Drawer open={pricingOpen} onOpenChange={setPricingOpen}>
+        <Drawer
+          open={pricingOpen}
+          onOpenChange={setPricingOpen}
+          shouldScaleBackground={false}
+        >
           <DrawerContent
             ref={pricingDialogRef}
             className="max-h-[92dvh] overflow-hidden"

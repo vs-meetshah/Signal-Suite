@@ -60,9 +60,6 @@ export default function IndicatorMarquee() {
       </div>
 
       <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-zinc-950 to-transparent sm:w-24" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-black to-transparent sm:w-24" />
-
         {isLoading && (
           <div className="flex gap-5 overflow-hidden px-6 sm:px-10" data-testid="marquee-skeleton">
             {Array.from({ length: 4 }).map((_, i) => (

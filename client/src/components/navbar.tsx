@@ -77,13 +77,13 @@ export function Navbar() {
       data-testid="navbar"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex h-16 min-w-0 items-center justify-between gap-2 sm:gap-4">
           <Link
             href="/"
-            className="group flex items-center gap-3"
+            className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3"
             data-testid="link-home"
           >
-            <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 shadow-lg shadow-blue-500/20 ring-1 ring-white/20">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 shadow-lg shadow-blue-500/20 ring-1 ring-white/20 sm:h-11 sm:w-11">
               <div className="absolute inset-0 bg-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
               <TrendingUp
                 className="relative h-5 w-5 text-white"
@@ -91,9 +91,9 @@ export function Navbar() {
               />
             </div>
 
-            <div className="leading-tight">
+            <div className="min-w-0 flex-1 leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="text-lg font-bold tracking-tight">
+                <span className="truncate text-base font-bold tracking-tight sm:text-lg">
                   Pine Signal Lab
                 </span>
                 {user?.isAdmin && (
@@ -138,7 +138,7 @@ export function Navbar() {
             })}
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               <ThemeToggle />
             </div>
@@ -269,7 +269,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="min-h-11 min-w-11 rounded-full border border-border/70 bg-muted/30 md:hidden"
+              className="h-10 w-10 rounded-full border border-border/70 bg-muted/30 md:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileOpen}

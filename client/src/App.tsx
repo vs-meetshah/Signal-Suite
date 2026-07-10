@@ -60,9 +60,9 @@ function AppShell() {
 
   return (
     <CartProvider userId={user?.id ?? null}>
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
         <Navbar />
-        <main id="main-content">
+        <main id="main-content" className="overflow-x-hidden">
           <Router />
         </main>
       </div>

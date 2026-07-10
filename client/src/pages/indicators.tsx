@@ -231,7 +231,7 @@ export default function IndicatorsPage() {
           </Card>
         </div>
 
-        <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 flex-wrap gap-2" data-testid="tier-tabs">
             {(["All", "Free", "Premium"] as const).map((name) => (
               <Button
@@ -246,14 +246,14 @@ export default function IndicatorsPage() {
               </Button>
             ))}
           </div>
-          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] xl:flex xl:w-auto xl:flex-wrap xl:items-center xl:justify-end">
-            <div className="relative col-span-2 min-w-0 sm:col-span-1">
+          <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] lg:w-auto lg:grid-cols-[minmax(18rem,24rem)_auto_auto] lg:justify-end">
+            <div className="relative col-span-2 min-w-0 sm:col-span-1 lg:col-span-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search indicators..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 w-full pl-8 sm:min-w-[260px] xl:w-[260px]"
+                className="h-9 w-full pl-8 pr-3 sm:min-w-[260px] lg:min-w-[18rem]"
                 data-testid="input-search"
               />
             </div>
@@ -263,7 +263,7 @@ export default function IndicatorsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="relative h-9 w-full justify-center px-3 sm:w-auto"
+                    className="relative h-9 w-full justify-center px-3 sm:w-auto lg:min-w-[7.5rem]"
                     data-testid="button-open-filters"
                     aria-label="Filters"
                   >
@@ -330,7 +330,7 @@ export default function IndicatorsPage() {
               </Drawer>
             )}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-9 w-full sm:w-[150px]" data-testid="select-sort">
+              <SelectTrigger className="h-9 w-full sm:w-[150px] lg:min-w-[9rem]" data-testid="select-sort">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -345,7 +345,7 @@ export default function IndicatorsPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="rounded-md border border-card-border p-5">
                 <Skeleton className="mb-4 h-32 w-full rounded-md" />
@@ -360,7 +360,7 @@ export default function IndicatorsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]"
             data-testid="indicators-grid"
           >
             {filtered.map((indicator) => (
