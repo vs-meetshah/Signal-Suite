@@ -162,6 +162,8 @@ export default function Checkout() {
       return { free: false };
     },
     onSuccess: async (result) => {
+      setCompletedFreeOrder(result.free);
+      setOrderComplete(true);
       clearCart();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] }),
@@ -169,8 +171,6 @@ export default function Checkout() {
         queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics"] }),
       ]);
-      setCompletedFreeOrder(result.free);
-      setOrderComplete(true);
       toast({
         title: result.free ? "Request submitted" : "Payment successful",
         description: result.free
