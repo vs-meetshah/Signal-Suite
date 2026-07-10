@@ -101,6 +101,7 @@ export function AdminAnalytics() {
   const { data, isLoading } = useQuery<Analytics>({
     queryKey: ["/api/admin/analytics"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchOnMount: "always",
   });
 
   if (isLoading || !data) {

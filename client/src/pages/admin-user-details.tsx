@@ -153,6 +153,7 @@ export default function AdminUserDetailsPage() {
     queryKey: ["/api/admin/users"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authUser?.isAdmin,
+    refetchOnMount: "always",
   });
 
   const selectedUser = useMemo(() => {

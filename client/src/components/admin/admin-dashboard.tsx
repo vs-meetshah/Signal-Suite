@@ -225,6 +225,7 @@ export function AdminDashboard() {
   const { data: users, isLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchOnMount: "always",
   });
 
   const approveMutation = useMutation({

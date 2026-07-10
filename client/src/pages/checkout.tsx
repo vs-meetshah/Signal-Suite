@@ -161,8 +161,14 @@ export default function Checkout() {
 
       return { free: false };
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       clearCart();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics"] }),
+      ]);
       setCompletedFreeOrder(result.free);
       setOrderComplete(true);
       toast({

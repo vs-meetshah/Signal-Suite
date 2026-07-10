@@ -230,6 +230,7 @@ export default function Dashboard() {
     queryKey: ["/api/dashboard"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user,
+    refetchOnMount: "always",
   });
 
   const { data: allIndicators } = useQuery<Indicator[]>({

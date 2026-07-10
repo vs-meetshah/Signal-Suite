@@ -50,6 +50,7 @@ export default function IndicatorsPage() {
 
   const { data: indicators, isLoading } = useQuery<Indicator[]>({
     queryKey: ["/api/indicators"],
+    refetchOnMount: "always",
   });
 
   useEffect(() => {

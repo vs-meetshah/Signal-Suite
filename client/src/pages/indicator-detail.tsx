@@ -184,11 +184,13 @@ export default function IndicatorDetail() {
 
   const { data: indicator, isLoading } = useQuery<Indicator>({
     queryKey: ["/api/indicators", params.slug],
+    refetchOnMount: "always",
   });
 
   const { data: access } = useQuery<{ hasAccess: boolean }>({
     queryKey: ["/api/access", indicator?.id],
     enabled: !!indicator?.id,
+    refetchOnMount: "always",
   });
 
   useEffect(() => {

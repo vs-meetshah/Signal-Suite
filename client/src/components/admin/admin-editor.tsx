@@ -85,6 +85,7 @@ export function AdminEditor() {
 
   const { data: indicators, isLoading } = useQuery<Indicator[]>({
     queryKey: ["/api/indicators"],
+    refetchOnMount: "always",
   });
 
   const filtered = useMemo(() => {
