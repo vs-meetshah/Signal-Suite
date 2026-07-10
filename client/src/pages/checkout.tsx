@@ -23,12 +23,39 @@ declare global {
   }
 }
 
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve();
+      return;
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    );
+
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("Failed to load Razorpay")));
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay"));
+    document.body.appendChild(script);
+  });
+}
+
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
   const { user, signupOrLogin, openAuthModal } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [orderComplete, setOrderComplete] = useState(false);
+  const [completedFreeOrder, setCompletedFreeOrder] = useState(false);
   const [isEditing, setIsEditing] = useState(!user);
 
   const form = useForm<InsertUser>({
@@ -62,7 +89,12 @@ export default function Checkout() {
       if (!user) {
         await signupOrLogin(data);
       } else if (isEditing) {
-        await apiRequest("POST", "/api/auth/update", data);
+        await apiRequest("POST", "/api/auth/update", {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          mobileNumber: data.mobileNumber,
+          tradingViewUsername: data.tradingViewUsername,
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       }
 
@@ -76,9 +108,15 @@ export default function Checkout() {
         })),
       };
 
+      if (totalPrice <= 0) {
+        await apiRequest("POST", "/api/orders", { items: orderData.items });
+        return { free: true };
+      }
+
       const createRes = await apiRequest("POST", "/api/razorpay/create-order", orderData);
       const razorpayOrder = await createRes.json();
 
+      await loadRazorpayScript();
       if (!window.Razorpay) {
         throw new Error("Razorpay checkout script not loaded");
       }
@@ -120,13 +158,18 @@ export default function Checkout() {
 
         razorpay.open();
       });
+
+      return { free: false };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       clearCart();
+      setCompletedFreeOrder(result.free);
       setOrderComplete(true);
       toast({
-        title: "Payment successful",
-        description: "Your order has been submitted for approval.",
+        title: result.free ? "Request submitted" : "Payment successful",
+        description: result.free
+          ? "Your free indicator request has been submitted for approval."
+          : "Your order has been submitted for approval.",
       });
     },
     onError: (error: Error) => {
@@ -147,10 +190,12 @@ export default function Checkout() {
             <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
           <h2 className="mt-6 text-2xl font-bold" data-testid="text-order-complete">
-            Payment Successful
+            {completedFreeOrder ? "Request Submitted" : "Payment Successful"}
           </h2>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            Your payment has been received. Your order is now submitted for approval. You'll get indicator access within 24 hours after approval.
+            {completedFreeOrder
+              ? "Your free indicator request has been submitted for admin approval. You'll get access once it is approved."
+              : "Your payment has been received. Your order is now submitted for approval. You'll get indicator access within 24 hours after approval."}
           </p>
           <p className="mt-2 text-muted-foreground leading-relaxed">
             Check your order status in <Link href="/dashboard" className="font-medium text-primary hover:underline">Profile → Dashboard</Link>, and feel free to contact Help/Support desk directly from there if you face any issues.
@@ -270,6 +315,7 @@ export default function Checkout() {
                                     {...fieldProps}
                                     type={field.type}
                                     placeholder={field.placeholder}
+                                    disabled={!!user && (field.name === "username" || field.name === "email")}
                                     className="pl-10"
                                     data-testid={`input-${field.name}`}
                                   />

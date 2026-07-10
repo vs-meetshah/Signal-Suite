@@ -68,15 +68,17 @@ const orderStatusBadge: Record<string, { variant: "default" | "secondary" | "des
   rejected: { variant: "destructive", icon: XCircle, label: "Rejected" },
 };
 
+const APP_TIME_ZONE = "Asia/Kolkata";
+
 function formatDate(value: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString("en-IN", {
-    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+    timeZone: APP_TIME_ZONE, year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
 function formatShortDate(value: string | null) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-IN", { year: "2-digit", month: "short", day: "numeric" });
+  return new Date(value).toLocaleDateString("en-IN", { timeZone: APP_TIME_ZONE, year: "2-digit", month: "short", day: "numeric" });
 }
 function formatINR(value: number) {
   return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -85,11 +87,13 @@ function isToday(value: string | Date) {
   const d = typeof value === "string" ? new Date(value) : value;
   if (!Number.isFinite(d.getTime())) return false;
   const now = new Date();
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  );
+  const dateKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return dateKey.format(d) === dateKey.format(now);
 }
 function calculateEndDate(createdAt: string, durationMonths: number, isTrial: boolean | null): Date {
   const d = new Date(createdAt);
@@ -99,6 +103,10 @@ function calculateEndDate(createdAt: string, durationMonths: number, isTrial: bo
     d.setMonth(d.getMonth() + Math.max(0, durationMonths));
   }
   return d;
+}
+
+function getApprovalRequestDate(order: AdminOrder): string {
+  return order.paidAt || order.createdAt;
 }
 
 interface TodayRequest {
@@ -120,7 +128,7 @@ function buildTodayRequests(users: AdminUser[] | undefined): TodayRequest[] {
     }
   }
 
-  out.sort((a, b) => new Date(b.order.createdAt).getTime() - new Date(a.order.createdAt).getTime());
+  out.sort((a, b) => new Date(getApprovalRequestDate(b.order)).getTime() - new Date(getApprovalRequestDate(a.order)).getTime());
 
   return out;
 }
@@ -174,7 +182,7 @@ function downloadTodayRequestsCSV(requests: TodayRequest[]) {
       .join(" | ");
     const earliestEnd = r.order.items.length > 0
       ? r.order.items
-        .map((it) => calculateEndDate(r.order.createdAt, it.duration, it.isTrial).getTime())
+        .map((it) => calculateEndDate(getApprovalRequestDate(r.order), it.duration, it.isTrial).getTime())
         .reduce((a, b) => Math.min(a, b))
       : null;
     return [
@@ -185,7 +193,7 @@ function downloadTodayRequestsCSV(requests: TodayRequest[]) {
       r.user.email,
       r.user.tradingViewUsername,
       r.order.id,
-      new Date(r.order.createdAt).toLocaleString("en-IN"),
+      new Date(getApprovalRequestDate(r.order)).toLocaleString("en-IN", { timeZone: APP_TIME_ZONE }),
       indicatorList || "(no items)",
       summary.label,
       Number.isFinite(parseFloat(r.order.totalAmount)) ? parseFloat(r.order.totalAmount) : 0,
@@ -281,6 +289,12 @@ export function AdminDashboard() {
             </h1>
             <p className="text-xs text-muted-foreground">Manage users, orders, and access requests</p>
           </div>
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/admin/users">
+              <Users className="mr-2 h-4 w-4" />
+              All Users
+            </Link>
+          </Button>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -710,9 +724,10 @@ function TodayRequestsPanel({
                 const isExpanded = expandedOrderId === orderId;
                 const isApprovingRow = approving && approvingId === orderId;
                 const orderTotal = parseFloat(r.order.totalAmount) || 0;
-                const orderCreated = new Date(r.order.createdAt);
-                const orderDateStr = orderCreated.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" });
-                const orderTimeStr = orderCreated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+                const requestDate = getApprovalRequestDate(r.order);
+                const orderCreated = new Date(requestDate);
+                const orderDateStr = orderCreated.toLocaleDateString("en-IN", { timeZone: APP_TIME_ZONE, day: "2-digit", month: "2-digit", year: "numeric" });
+                const orderTimeStr = orderCreated.toLocaleTimeString("en-IN", { timeZone: APP_TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: true });
                 const fullName = `${r.user.firstName} ${r.user.lastName}`;
                 const initials = `${r.user.firstName.charAt(0).toUpperCase()}${r.user.lastName.charAt(0).toUpperCase()}`;
 
@@ -739,7 +754,7 @@ function TodayRequestsPanel({
                           <Hourglass className="mr-1 h-3 w-3" />
                           Pending
                         </Badge>
-                        {!isToday(r.order.createdAt) && (
+                        {!isToday(requestDate) && (
                           <Badge
                             variant="outline"
                             className="text-xs border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"

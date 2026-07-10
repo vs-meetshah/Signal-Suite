@@ -83,6 +83,87 @@ function readWatchlistIds(): number[] {
   }
 }
 
+function DashboardStatCard({
+  label,
+  value,
+  description,
+  icon: Icon,
+  tone,
+  active,
+  testId,
+  onClick,
+}: {
+  label: string;
+  value: number | string;
+  description: string;
+  icon: typeof TrendingUp;
+  tone: "emerald" | "amber" | "blue" | "violet";
+  active: boolean;
+  testId: string;
+  onClick: () => void;
+}) {
+  const toneClasses = {
+    emerald: {
+      icon: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20",
+      glow: "from-emerald-500/12",
+      activeBorder: "border-emerald-500/50 ring-emerald-500/20",
+    },
+    amber: {
+      icon: "bg-amber-500/10 text-amber-600 ring-amber-500/20",
+      glow: "from-amber-500/12",
+      activeBorder: "border-amber-500/50 ring-amber-500/20",
+    },
+    blue: {
+      icon: "bg-blue-500/10 text-blue-600 ring-blue-500/20",
+      glow: "from-blue-500/12",
+      activeBorder: "border-blue-500/50 ring-blue-500/20",
+    },
+    violet: {
+      icon: "bg-violet-500/10 text-violet-600 ring-violet-500/20",
+      glow: "from-violet-500/12",
+      activeBorder: "border-violet-500/50 ring-violet-500/20",
+    },
+  }[tone];
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      data-testid={testId}
+      className={
+        active
+          ? `group relative overflow-hidden rounded-2xl border bg-card p-5 text-left shadow-sm ring-2 transition-all hover:-translate-y-0.5 hover:shadow-md ${toneClasses.activeBorder}`
+          : "group relative overflow-hidden rounded-2xl border border-card-border bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
+      }
+    >
+      <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${toneClasses.glow} via-transparent to-transparent opacity-80`}
+      />
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+
+          <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+            {value}
+          </p>
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            {description}
+          </p>
+        </div>
+
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 transition-transform group-hover:scale-105 ${toneClasses.icon}`}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </button>
+  );
+}
+
 interface DashboardOrderItem {
   id: number;
   orderId: number;
@@ -242,12 +323,52 @@ export default function Dashboard() {
   const totalSpent = orders?.reduce((sum, o) => sum + (parseFloat(o.totalAmount) || 0), 0) || 0;
   const savedIndicators = (allIndicators || []).filter((ind) => watchlistIds.includes(ind.id));
 
-  const stats: { key: DashView; label: string; count: number; Icon: typeof TrendingUp; iconWrap: string; iconColor: string; testId: string }[] = [
-    { key: "active", label: "Active Indicators", count: activeIndicators.length, Icon: TrendingUp, iconWrap: "bg-emerald-500/10", iconColor: "text-emerald-600 dark:text-emerald-400", testId: "stat-active-indicators" },
-    { key: "pending", label: "Pending Requests", count: pendingItems.length, Icon: Timer, iconWrap: "bg-amber-500/10", iconColor: "text-amber-600 dark:text-amber-400", testId: "stat-pending-requests" },
-    { key: "orders", label: "Total Orders", count: totalOrders, Icon: Package, iconWrap: "bg-primary/10", iconColor: "text-primary", testId: "stat-total-orders" },
-    { key: "saved", label: "Saved Indicators", count: savedIndicators.length, Icon: Bookmark, iconWrap: "bg-blue-500/10", iconColor: "text-blue-600 dark:text-blue-400", testId: "stat-saved-indicators" },
-  ];
+  const stats: {
+    key: DashView;
+    label: string;
+    count: number;
+    description: string;
+    Icon: typeof TrendingUp;
+    tone: "emerald" | "amber" | "blue" | "violet";
+    testId: string;
+  }[] = [
+      {
+        key: "active",
+        label: "Active Indicators",
+        count: activeIndicators.length,
+        description: "Ready to use now",
+        Icon: TrendingUp,
+        tone: "emerald",
+        testId: "stat-active-indicators",
+      },
+      {
+        key: "pending",
+        label: "Pending Requests",
+        count: pendingItems.length,
+        description: "Waiting for approval",
+        Icon: Timer,
+        tone: "amber",
+        testId: "stat-pending-requests",
+      },
+      {
+        key: "orders",
+        label: "Total Orders",
+        count: totalOrders,
+        description: `Total spent ₹${totalSpent.toLocaleString("en-IN")}`,
+        Icon: Package,
+        tone: "blue",
+        testId: "stat-total-orders",
+      },
+      {
+        key: "saved",
+        label: "Saved Indicators",
+        count: savedIndicators.length,
+        description: "Bookmarked tools",
+        Icon: Bookmark,
+        tone: "violet",
+        testId: "stat-saved-indicators",
+      },
+    ];
 
   async function onSubmitProfile(values: AccountFormValues) {
     setSavingProfile(true);
@@ -284,31 +405,20 @@ export default function Dashboard() {
 
           <div className="min-w-0">
             <section data-testid="section-my-orders">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-                {stats.map((s) => {
-                  const active = view === s.key;
-                  return (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => setView(s.key)}
-                      aria-pressed={active}
-                      className={`text-left rounded-lg border p-5 transition-all hover-elevate ${active ? "border-primary/60 bg-primary/[0.04] ring-1 ring-primary/40" : "border-card-border bg-card"
-                        }`}
-                      data-testid={s.testId}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${s.iconWrap}`}>
-                          <s.Icon className={`h-5 w-5 ${s.iconColor}`} />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold">{s.count}</p>
-                          <p className="text-sm text-muted-foreground">{s.label}</p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {stats.map((s) => (
+                  <DashboardStatCard
+                    key={s.key}
+                    label={s.label}
+                    value={s.count}
+                    description={s.description}
+                    icon={s.Icon}
+                    tone={s.tone}
+                    active={view === s.key}
+                    testId={s.testId}
+                    onClick={() => setView(s.key)}
+                  />
+                ))}
               </div>
 
               {view === "active" && (
@@ -341,7 +451,7 @@ export default function Dashboard() {
                         const totalDays = item.isTrial ? 15 : item.duration * 30;
                         const daysLeft = item.daysRemaining ?? 0;
                         const pct = totalDays > 0 ? Math.min(1, Math.max(0, daysLeft / totalDays)) : 0;
-                        const radius = 30;
+                        const radius = 34;
                         const circumference = 2 * Math.PI * radius;
                         const dashOffset = circumference * (1 - pct);
                         const startedDate = new Date(item.orderApprovedAt ?? item.orderCreatedAt).toLocaleDateString("en-IN", {
@@ -417,13 +527,13 @@ export default function Dashboard() {
 
                               <div className="flex items-center justify-start lg:justify-center">
                                 {isLifetime ? (
-                                  <div className="flex h-20 w-20 flex-col items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 text-white shadow-[0_0_24px_rgba(16,185,129,0.3)]">
+                                  <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 text-white shadow-[0_0_24px_rgba(16,185,129,0.3)]">
                                     <InfinityIcon className="h-7 w-7" />
                                     <span className="text-[10px] font-semibold">Lifetime</span>
                                   </div>
                                 ) : (
-                                  <div className={`relative flex h-20 w-20 items-center justify-center rounded-full ${glow}`}>
-                                    <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
+                                  <div className={`relative flex h-24 w-24 items-center justify-center rounded-full ${glow}`}>
+                                    <svg className="absolute inset-0 -rotate-90" viewBox="0 0 96 96" aria-hidden="true">
                                       <defs>
                                         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
                                           <stop offset="0%" stopColor={ringStops[0]} />
@@ -431,16 +541,16 @@ export default function Dashboard() {
                                         </linearGradient>
                                       </defs>
                                       <circle
-                                        cx="40"
-                                        cy="40"
+                                        cx="48"
+                                        cy="48"
                                         r={radius}
                                         fill="none"
                                         className="stroke-muted/40"
                                         strokeWidth="6"
                                       />
                                       <circle
-                                        cx="40"
-                                        cy="40"
+                                        cx="48"
+                                        cy="48"
                                         r={radius}
                                         fill="none"
                                         stroke={`url(#${gradientId})`}
@@ -457,7 +567,7 @@ export default function Dashboard() {
                                       >
                                         {daysLeft}
                                       </span>
-                                      <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                      <span className="mt-0.5 max-w-[68px] whitespace-nowrap text-center text-[9px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
                                         days left
                                       </span>
                                     </div>

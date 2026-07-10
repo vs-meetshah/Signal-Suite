@@ -55,7 +55,7 @@ export default function IndicatorsPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
     const syncViewport = () => {
       setIsDesktopFilters(mediaQuery.matches);
       setFilterOpen(false);
@@ -231,8 +231,8 @@ export default function IndicatorsPage() {
           </Card>
         </div>
 
-        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2" data-testid="tier-tabs">
+        <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 flex-wrap gap-2" data-testid="tier-tabs">
             {(["All", "Free", "Premium"] as const).map((name) => (
               <Button
                 key={name}
@@ -246,14 +246,14 @@ export default function IndicatorsPage() {
               </Button>
             ))}
           </div>
-          <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:flex-wrap md:items-center md:justify-end">
-            <div className="relative col-span-2 md:col-span-1">
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] xl:flex xl:w-auto xl:flex-wrap xl:items-center xl:justify-end">
+            <div className="relative col-span-2 min-w-0 sm:col-span-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search indicators..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 w-full pl-8 md:w-[220px]"
+                className="h-9 w-full pl-8 sm:min-w-[260px] xl:w-[260px]"
                 data-testid="input-search"
               />
             </div>
@@ -263,7 +263,7 @@ export default function IndicatorsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="relative h-9 w-full justify-center px-3 md:w-auto"
+                    className="relative h-9 w-full justify-center px-3 sm:w-auto"
                     data-testid="button-open-filters"
                     aria-label="Filters"
                   >
@@ -283,6 +283,7 @@ export default function IndicatorsPage() {
                   align="end"
                   side="bottom"
                   sideOffset={8}
+                  avoidCollisions={false}
                   className="z-[90] w-[18rem] overflow-hidden p-0"
                   data-testid="popover-filters"
                 >
@@ -329,7 +330,7 @@ export default function IndicatorsPage() {
               </Drawer>
             )}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-9 w-full md:w-[140px]" data-testid="select-sort">
+              <SelectTrigger className="h-9 w-full sm:w-[150px]" data-testid="select-sort">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

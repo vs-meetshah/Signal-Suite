@@ -906,66 +906,18 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Invalid order data" });
     }
 
-    let serverTotal = 0;
-    const validatedItems = [];
+    const { serverTotal, validatedItems } = await validateOrderItems(items);
 
-    for (const item of items) {
-      const indicator = await storage.getIndicatorById(item.indicatorId);
-      if (!indicator) {
-        return res.status(400).json({ message: `Indicator ${item.indicatorId} not found` });
-      }
-
-      const duration = Math.max(1, Math.min(12, parseInt(item.duration) || 1));
-      const isTrial = item.isTrial === true && indicator.tier === "premium";
-
-      const version: "indicator" | "strategy" | "both" =
-        item.version === "strategy"
-          ? "strategy"
-          : item.version === "both"
-            ? "both"
-            : "indicator";
-
-      const indicatorBase = parseFloat(indicator.price);
-      const strategyBase =
-        indicatorBase === 0 ? 499 : Math.round(indicatorBase * 1.35);
-
-      const baseUnit =
-        version === "strategy"
-          ? strategyBase
-          : version === "both"
-            ? indicatorBase + strategyBase
-            : indicatorBase;
-
-      let price: string;
-      if (isTrial) {
-        const trialIndicator = 5250;
-        const trialStrategy = Math.round(5250 * 1.35);
-
-        price =
-          version === "strategy"
-            ? trialStrategy.toFixed(2)
-            : version === "both"
-              ? (trialIndicator + trialStrategy).toFixed(2)
-              : trialIndicator.toFixed(2);
-      } else {
-        price = (baseUnit * duration).toFixed(2);
-      }
-
-      serverTotal += parseFloat(price);
-
-      validatedItems.push({
-        indicatorId: indicator.id,
-        duration,
-        price,
-        isTrial,
-        version,
-      });
+    if (serverTotal > 0) {
+      return res.status(400).json({ message: "Paid orders must use Razorpay checkout" });
     }
 
     const order = await storage.createOrder({
       userId: req.session.userId,
       status: "pending",
       totalAmount: serverTotal.toFixed(2),
+      paymentStatus: "free",
+      paidAt: new Date(),
     });
 
     for (const vi of validatedItems) {

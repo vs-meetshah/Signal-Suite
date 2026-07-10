@@ -6,11 +6,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/components/cart-provider";
 import { AuthProvider } from "@/components/auth-provider";
-import { AuthModal } from "@/components/auth-modal";
 import { Navbar } from "@/components/navbar";
 import NotFound from "@/pages/not-found";
-
-const Home = lazy(() => import("@/pages/home"));
+import Home from "@/pages/home";
+const AdminUsersPage = lazy(() => import("@/pages/admin-users"));
+const AuthModal = lazy(() => import("@/components/auth-modal").then((m) => ({ default: m.AuthModal })));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const IndicatorsPage = lazy(() => import("@/pages/indicators"));
 const IndicatorDetail = lazy(() => import("@/pages/indicator-detail"));
@@ -20,7 +20,7 @@ const Dashboard = lazy(() => import("@/pages/dashboard"));
 const AdminPage = lazy(() => import("@/pages/admin"));
 const SupportPage = lazy(() => import("@/pages/support"));
 const AboutPage = lazy(() => import("@/pages/about"));
-
+const AdminUserDetailsPage = lazy(() => import("@/pages/admin-user-details"));
 function PageLoader() {
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-7xl items-center justify-center px-4">
@@ -44,6 +44,8 @@ function Router() {
         <Route path="/checkout" component={Checkout} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/profile" component={ProfilePage} />
+        <Route path="/admin/users" component={AdminUsersPage} />
+        <Route path="/admin/users/:id" component={AdminUserDetailsPage} />
         <Route path="/admin" component={AdminPage} />
         <Route path="/support" component={SupportPage} />
         <Route path="/about" component={AboutPage} />
@@ -65,7 +67,9 @@ function App() {
                 <Router />
               </main>
             </div>
-            <AuthModal />
+            <Suspense fallback={null}>
+              <AuthModal />
+            </Suspense>
             <Toaster />
           </CartProvider>
         </AuthProvider>

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import compression from "compression";
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -31,6 +32,7 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+app.use(compression());
 
 const PgStore = connectPg(session);
 app.use(
