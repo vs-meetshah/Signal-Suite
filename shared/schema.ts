@@ -1,4 +1,4 @@
-import { pgTable, text, serial,index, integer, boolean, decimal, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, index, integer, boolean, decimal, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   mobileNumber: text("mobile_number").notNull(),
   tradingViewUsername: text("tradingview_username").notNull(),
+  passwordHash: text("password_hash"),
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -93,13 +94,42 @@ export const orderItems = pgTable("order_items", {
 export const insertIndicatorSchema = createInsertSchema(indicators).omit({ id: true }).extend({
   faqs: z.array(z.object({ q: z.string(), a: z.string() })).default([]).optional(),
 });
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, isAdmin: true }).extend({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
+
+export const insertUserSchema = createInsertSchema(users)
+  .omit({
+    id: true,
+    createdAt: true,
+    isAdmin: true,
+    passwordHash: true,
+  })
+  .extend({
+    firstName: z.string().min(2, "First name must be at least 2 characters"),
+    lastName: z.string().min(2, "Last name must be at least 2 characters"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    email: z.string().email("Please enter a valid email address"),
+    mobileNumber: z
+      .string()
+      .min(10, "Please enter a valid mobile number")
+      .regex(/^[+]?[\d\s()-]+$/, "Invalid mobile number format"),
+    tradingViewUsername: z.string().min(2, "TradingView username is required"),
+  });
+
+export const authSignupSchema = insertUserSchema
+  .extend({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter"),
+    confirmPassword: z.string().min(1, "Confirm password is required"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export const authLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  mobileNumber: z.string().min(10, "Please enter a valid mobile number").regex(/^[+]?[\d\s()-]+$/, "Invalid mobile number format"),
-  tradingViewUsername: z.string().min(2, "TradingView username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const updateUserProfileSchema = z.object({
@@ -119,3 +149,5 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type AuthSignupInput = z.infer<typeof authSignupSchema>;
+export type AuthLoginInput = z.infer<typeof authLoginSchema>;

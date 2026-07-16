@@ -1,10 +1,44 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, updateUserProfileSchema, insertIndicatorSchema } from "@shared/schema";
+import {
+  insertUserSchema,
+  authSignupSchema,
+  authLoginSchema,
+  updateUserProfileSchema,
+  insertIndicatorSchema,
+} from "@shared/schema";
 import { seedDatabase } from "./seed";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
+
+
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+(async () => {
+  const targetEmail = "meet@gmail.com";
+  const targetPassword = "1234";
+
+  const existingUser = await storage.getUserByEmail(targetEmail);
+
+  if (!existingUser) {
+    console.log(`[password-bootstrap] User not found: ${targetEmail}`);
+    return;
+  }
+
+  const passwordHash = await hashPassword(targetPassword);
+
+  await db
+    .update(users)
+    .set({ passwordHash })
+    .where(eq(users.id, existingUser.id));
+
+  console.log(`[password-bootstrap] Password updated for ${targetEmail}`);
+})().catch((error) => {
+  console.error("[password-bootstrap] Failed:", error);
+});
 
 const DURATION_DISCOUNTS: Record<number, number> = {
   1: 0.03,
@@ -13,6 +47,20 @@ const DURATION_DISCOUNTS: Record<number, number> = {
   9: 0.12,
   12: 0.24,
 };
+
+async function hashPassword(password: string) {
+  return bcrypt.hash(password, 12);
+}
+
+async function verifyPassword(password: string, storedHash: string | null | undefined) {
+  if (!storedHash) return false;
+  return bcrypt.compare(password, storedHash);
+}
+
+function toClientUser<T extends { passwordHash?: string | null }>(user: T) {
+  const { passwordHash, ...safeUser } = user;
+  return safeUser;
+}
 
 function getDurationDiscount(months: number): number {
   return DURATION_DISCOUNTS[months] ?? 0;
@@ -85,7 +133,7 @@ export async function registerRoutes(
       req.session.destroy(() => { });
       return res.status(401).json({ message: "User not found" });
     }
-    res.json(user);
+    res.json(toClientUser(user));
   });
 
   app.get("/api/auth/check-email", async (req, res) => {
@@ -102,42 +150,101 @@ export async function registerRoutes(
   });
 
   app.post("/api/auth/signup-or-login", async (req, res) => {
-    const parsed = insertUserSchema.safeParse(req.body);
+    const parsed = authSignupSchema.safeParse(req.body);
+
     if (!parsed.success) {
-      return res.status(400).json({ message: "Validation failed", errors: parsed.error.flatten() });
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.flatten(),
+      });
     }
 
+    const { password, confirmPassword, ...userData } = parsed.data;
+
     const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-    const userInput = { ...parsed.data, email: parsed.data.email.trim().toLowerCase() };
+    const userInput = {
+      ...userData,
+      email: userData.email.trim().toLowerCase(),
+    };
+
     const existing = await storage.getUserByEmail(userInput.email);
+
     if (existing) {
+      const passwordOk = await verifyPassword(password, existing.passwordHash);
+
+      if (!passwordOk) {
+        return res.status(401).json({
+          message: existing.passwordHash
+            ? "This email already exists. Please enter the correct password."
+            : "This account does not have a password set. Please contact support.",
+        });
+      }
+
       if (adminEmail && existing.email.toLowerCase() === adminEmail && !existing.isAdmin) {
         await storage.setUserAdmin(existing.id, true);
         existing.isAdmin = true;
       }
+
       req.session.userId = existing.id;
-      return res.json({ user: existing, isNewUser: false });
+
+      return res.json({
+        user: toClientUser(existing),
+        isNewUser: false,
+      });
     }
 
-    const user = await storage.createUser(userInput);
+    const passwordHash = await hashPassword(password);
+
+    const user = await storage.createUser({
+      ...userInput,
+      passwordHash,
+    });
+
     if (adminEmail && user.email.toLowerCase() === adminEmail) {
       await storage.setUserAdmin(user.id, true);
       user.isAdmin = true;
     }
+
     req.session.userId = user.id;
-    res.status(201).json({ user, isNewUser: true });
+
+    return res.status(201).json({
+      user: toClientUser(user),
+      isNewUser: true,
+    });
   });
 
   app.post("/api/auth/login", async (req, res) => {
-    const email = String(req.body?.email || "").trim().toLowerCase();
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+    const parsed = authLoginSchema.safeParse({
+      email: String(req.body?.email || "").trim().toLowerCase(),
+      password: String(req.body?.password || ""),
+    });
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.flatten(),
+      });
     }
+
+    const { email, password } = parsed.data;
 
     const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const existing = await storage.getUserByEmail(email);
+
     if (!existing) {
-      return res.status(404).json({ message: "No account found with this email. Please sign up first." });
+      return res.status(404).json({
+        message: "No account found with this email. Please sign up first.",
+      });
+    }
+
+    const passwordOk = await verifyPassword(password, existing.passwordHash);
+
+    if (!passwordOk) {
+      return res.status(401).json({
+        message: existing.passwordHash
+          ? "Invalid email or password."
+          : "Password is not set for this account. Please contact support.",
+      });
     }
 
     if (adminEmail && existing.email.toLowerCase() === adminEmail && !existing.isAdmin) {
@@ -146,30 +253,55 @@ export async function registerRoutes(
     }
 
     req.session.userId = existing.id;
-    res.json({ user: existing });
+
+    return res.json({
+      user: toClientUser(existing),
+    });
   });
 
   app.post("/api/auth/signup", async (req, res) => {
-    const parsed = insertUserSchema.safeParse(req.body);
+    const parsed = authSignupSchema.safeParse(req.body);
+
     if (!parsed.success) {
-      return res.status(400).json({ message: "Validation failed", errors: parsed.error.flatten() });
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.flatten(),
+      });
     }
 
-    const userInput = { ...parsed.data, email: parsed.data.email.trim().toLowerCase() };
+    const { password, confirmPassword, ...userData } = parsed.data;
+
+    const userInput = {
+      ...userData,
+      email: userData.email.trim().toLowerCase(),
+    };
+
     const existing = await storage.getUserByEmail(userInput.email);
+
     if (existing) {
-      return res.status(409).json({ message: "An account already exists with this email. Please log in instead." });
+      return res.status(409).json({
+        message: "An account already exists with this email. Please log in instead.",
+      });
     }
 
+    const passwordHash = await hashPassword(password);
     const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-    const user = await storage.createUser(userInput);
+
+    const user = await storage.createUser({
+      ...userInput,
+      passwordHash,
+    });
+
     if (adminEmail && user.email.toLowerCase() === adminEmail) {
       await storage.setUserAdmin(user.id, true);
       user.isAdmin = true;
     }
 
     req.session.userId = user.id;
-    res.status(201).json({ user });
+
+    return res.status(201).json({
+      user: toClientUser(user),
+    });
   });
 
   const requireAdmin = async (req: any, res: any, next: any) => {
@@ -244,7 +376,7 @@ export async function registerRoutes(
           .reduce((a, b) => Math.max(a, b), 0);
 
         return {
-          ...u,
+           ...toClientUser(u),
           orders: ordersWithItems,
           hasActivePlan,
           planType,
@@ -678,7 +810,7 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Validation failed", errors: parsed.error.flatten() });
     }
     const user = await storage.updateUser(req.session.userId, parsed.data);
-    res.json(user);
+    res.json(toClientUser(user));
   });
 
   app.post("/api/auth/logout", async (req, res) => {

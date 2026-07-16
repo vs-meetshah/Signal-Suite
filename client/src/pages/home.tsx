@@ -961,13 +961,6 @@ function TestimonialCard({ t }: { t: Testimonial }) {
       <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-zinc-300">
         {t.quote}
       </p>
-      <div className="mt-4 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
-          <ShieldCheck className="h-3 w-3" />
-          PnL Verified
-        </span>
-        <span className="text-sm font-bold text-emerald-300">{t.pnl}</span>
-      </div>
     </div>
   );
 }
@@ -985,7 +978,7 @@ function TestimonialRow({
 }) {
   const track = [...items, ...items];
   return (
-    <div className="marquee-pause-on-hover overflow-hidden">
+    <div className="marquee-pause-on-hover -mt-1 overflow-hidden pt-1">
       <div
         className={`flex w-max gap-4 ${reverse ? "animate-marquee-x-reverse" : "animate-marquee-x"}`}
         style={{ ["--marquee-duration" as string]: `${durationSeconds}s` }}

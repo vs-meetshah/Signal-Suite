@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, CheckCircle2, User, Mail, Phone, AtSign, Monitor, Pencil } from "lucide-react";
+import { ArrowLeft, CheckCircle2, User, Mail, Phone, AtSign, Monitor, Pencil, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema } from "@shared/schema";
-import type { InsertUser } from "@shared/schema";
+import { insertUserSchema, authSignupSchema } from "@shared/schema";
+import type { InsertUser, AuthSignupInput } from "@shared/schema";
 import { computeCartItemTotal, getDurationDiscount, useCart } from "@/components/cart-provider";
 import { useAuth } from "@/components/auth-provider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -22,6 +22,10 @@ declare global {
     Razorpay?: any;
   }
 }
+type CheckoutFormData = InsertUser & {
+  password?: string;
+  confirmPassword?: string;
+};
 
 function loadRazorpayScript(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -57,9 +61,11 @@ export default function Checkout() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [completedFreeOrder, setCompletedFreeOrder] = useState(false);
   const [isEditing, setIsEditing] = useState(!user);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const form = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
+  const form = useForm<CheckoutFormData>({
+    resolver: zodResolver(user ? insertUserSchema : authSignupSchema),
     defaultValues: {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
@@ -67,6 +73,8 @@ export default function Checkout() {
       email: user?.email || "",
       mobileNumber: user?.mobileNumber || "",
       tradingViewUsername: user?.tradingViewUsername || "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -79,15 +87,19 @@ export default function Checkout() {
         email: user.email,
         mobileNumber: user.mobileNumber,
         tradingViewUsername: user.tradingViewUsername,
+        password: "",
+        confirmPassword: "",
       });
       setIsEditing(false);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
     }
   }, [user, form]);
 
   const submitMutation = useMutation({
-    mutationFn: async (data: InsertUser) => {
+    mutationFn: async (data: CheckoutFormData) => {
       if (!user) {
-        await signupOrLogin(data);
+        await signupOrLogin(data as AuthSignupInput);
       } else if (isEditing) {
         await apiRequest("POST", "/api/auth/update", {
           firstName: data.firstName,
@@ -332,6 +344,76 @@ export default function Checkout() {
                           )}
                         />
                       ))}
+
+                      {!user && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                      {...field}
+                                      type={showPassword ? "text" : "password"}
+                                      placeholder="Minimum 8 characters"
+                                      className="pl-10 pr-10"
+                                      autoComplete="new-password"
+                                      data-testid="input-password"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPassword((value) => !value)}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                                      aria-label={showPassword ? "Hide password" : "Show password"}
+                                      data-testid="button-toggle-password"
+                                    >
+                                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="confirmPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Confirm Password</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                      {...field}
+                                      type={showConfirmPassword ? "text" : "password"}
+                                      placeholder="Re-enter password"
+                                      className="pl-10 pr-10"
+                                      autoComplete="new-password"
+                                      data-testid="input-confirm-password"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowConfirmPassword((value) => !value)}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                      data-testid="button-toggle-confirm-password"
+                                    >
+                                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
                     </div>
 
                     <Separator className="my-6" />
@@ -352,7 +434,11 @@ export default function Checkout() {
                               email: user.email,
                               mobileNumber: user.mobileNumber,
                               tradingViewUsername: user.tradingViewUsername,
+                              password: "",
+                              confirmPassword: "",
                             });
+                            setShowPassword(false);
+                            setShowConfirmPassword(false);
                           }}
                           data-testid="button-cancel-edit"
                         >

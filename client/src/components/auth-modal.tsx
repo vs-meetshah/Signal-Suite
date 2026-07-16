@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, AtSign, Monitor, Loader2, AlertCircle } from "lucide-react";
+import { User, Mail, Phone, AtSign, Monitor, Loader2, AlertCircle, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
-import { insertUserSchema } from "@shared/schema";
-import type { InsertUser, User as AuthUser } from "@shared/schema";
+import { authSignupSchema } from "@shared/schema";
+import type { AuthSignupInput, User as AuthUser } from "@shared/schema";
 import { useAuth, type AuthMode } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,11 +27,15 @@ export function AuthModal() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
   const [notice, setNotice] = useState<{ title: string; description: string } | null>(null);
   const mode: AuthMode = authModalMode;
 
-  const signupForm = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
+  const signupForm = useForm<AuthSignupInput>({
+    resolver: zodResolver(authSignupSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -39,12 +43,18 @@ export function AuthModal() {
       email: "",
       mobileNumber: "",
       tradingViewUsername: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
   useEffect(() => {
     if (!isAuthModalOpen) {
       setLoginEmail("");
+      setLoginPassword("");
+      setShowLoginPassword(false);
+      setShowSignupPassword(false);
+      setShowSignupConfirmPassword(false);
       setNotice(null);
       signupForm.reset();
     }
@@ -79,15 +89,18 @@ export function AuthModal() {
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const email = loginEmail.trim();
-    if (!email) {
-      setNotice({ title: "Email required", description: "Enter your email to log in." });
+    if (!email || !loginPassword) {
+      setNotice({
+        title: "Email and password required",
+        description: "Enter your email and password to log in.",
+      });
       return;
     }
 
     setIsSubmitting(true);
     setNotice(null);
     try {
-      const result = await login(email);
+      const result = await login(email, loginPassword);
       toast({
         title: "Welcome back!",
         description: `Logged in as ${result.user.firstName} ${result.user.lastName}`,
@@ -103,7 +116,7 @@ export function AuthModal() {
     }
   };
 
-  const handleSignup = async (data: InsertUser) => {
+  const handleSignup = async (data: AuthSignupInput) => {
     setIsSubmitting(true);
     setNotice(null);
     try {
@@ -121,7 +134,7 @@ export function AuthModal() {
         switchMode("login");
         setNotice({
           title: "Account already exists",
-          description: "This email is already registered. We switched you to login, so you only need to continue with your email.",
+          description: "This email is already registered. We switched you to login. Please enter your password to continue.",
         });
         return;
       }
@@ -144,6 +157,8 @@ export function AuthModal() {
     { name: "mobileNumber" as const, label: "Mobile Number", placeholder: "+91 98765 43210", icon: Phone, type: "tel" },
     { name: "username" as const, label: "User Name", placeholder: "rahultrades", icon: AtSign, type: "text" },
     { name: "tradingViewUsername" as const, label: "TradingView Username", placeholder: "rahul_sharma_trades", icon: Monitor, type: "text" },
+    { name: "password" as const, label: "Password", placeholder: "Minimum 8 characters", icon: LockKeyhole, type: "password" },
+    { name: "confirmPassword" as const, label: "Confirm Password", placeholder: "Re-enter password", icon: LockKeyhole, type: "password" },
   ];
 
   return (
@@ -155,7 +170,7 @@ export function AuthModal() {
           </DialogTitle>
           <DialogDescription>
             {mode === "login"
-              ? "Enter your registered email."
+              ? "Enter your registered email and password."
               : "Fill in your details once to start using Pine Signal Lab."}
           </DialogDescription>
         </DialogHeader>
@@ -187,6 +202,33 @@ export function AuthModal() {
                   autoComplete="email"
                   data-testid="input-login-email"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Password
+              </label>
+              <div className="relative mt-2">
+                <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type={showLoginPassword ? "text" : "password"}
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                  placeholder="Enter your password"
+                  className="pl-10 pr-10"
+                  autoComplete="current-password"
+                  data-testid="input-login-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                  aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                  data-testid="button-toggle-login-password"
+                >
+                  {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -232,11 +274,42 @@ export function AuthModal() {
                             <field.icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                               {...fieldProps}
-                              type={field.type}
+                              type={
+                                field.name === "password"
+                                  ? showSignupPassword ? "text" : "password"
+                                  : field.name === "confirmPassword"
+                                    ? showSignupConfirmPassword ? "text" : "password"
+                                    : field.type
+                              }
                               placeholder={field.placeholder}
-                              className="pl-10"
+                              className={field.type === "password" ? "pl-10 pr-10" : "pl-10"}
                               data-testid={`input-auth-${field.name}`}
                             />
+                            {field.type === "password" && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (field.name === "password") {
+                                    setShowSignupPassword((value) => !value);
+                                  } else {
+                                    setShowSignupConfirmPassword((value) => !value);
+                                  }
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                                aria-label={
+                                  field.name === "password"
+                                    ? showSignupPassword ? "Hide password" : "Show password"
+                                    : showSignupConfirmPassword ? "Hide confirm password" : "Show confirm password"
+                                }
+                                data-testid={`button-toggle-auth-${field.name}`}
+                              >
+                                {(field.name === "password" ? showSignupPassword : showSignupConfirmPassword) ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </button>
+                            )}
                           </div>
                         </FormControl>
                         <FormMessage />

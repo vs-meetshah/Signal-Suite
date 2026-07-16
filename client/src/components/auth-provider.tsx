@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { CART_CLEARED_EVENT } from "@/components/cart-provider";
-import type { User, InsertUser } from "@shared/schema";
+import type { User, InsertUser, AuthSignupInput } from "@shared/schema";
 
 export type AuthMode = "login" | "signup";
 
@@ -14,9 +14,9 @@ interface AuthContextType {
   openAuthModal: (options?: { onSuccess?: () => void; mode?: AuthMode }) => void;
   closeAuthModal: () => void;
   authModalOnSuccess: (() => void) | null;
-  login: (email: string) => Promise<{ user: User }>;
-  signup: (data: InsertUser) => Promise<{ user: User }>;
-  signupOrLogin: (data: InsertUser) => Promise<{ user: User; isNewUser: boolean }>;
+  login: (email: string, password: string) => Promise<{ user: User }>;
+  signup: (data: AuthSignupInput) => Promise<{ user: User }>;
+  signupOrLogin: (data: AuthSignupInput) => Promise<{ user: User; isNewUser: boolean }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<InsertUser>) => Promise<User>;
 }
@@ -44,21 +44,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthModalOnSuccess(null);
   }, []);
 
-  const login = useCallback(async (email: string) => {
-    const res = await apiRequest("POST", "/api/auth/login", { email });
+  const login = useCallback(async (email: string, password: string) => {
+    const res = await apiRequest("POST", "/api/auth/login", { email, password });
     const result = await res.json();
     queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     return result;
   }, []);
 
-  const signup = useCallback(async (data: InsertUser) => {
+  const signup = useCallback(async (data: AuthSignupInput) => {
     const res = await apiRequest("POST", "/api/auth/signup", data);
     const result = await res.json();
     queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     return result;
   }, []);
 
-  const signupOrLogin = useCallback(async (data: InsertUser) => {
+  const signupOrLogin = useCallback(async (data: AuthSignupInput) => {
     const res = await apiRequest("POST", "/api/auth/signup-or-login", data);
     const result = await res.json();
     queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });

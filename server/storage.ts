@@ -1,4 +1,4 @@
-import { 
+import {
   indicators, users, orders, orderItems,
   type Indicator, type InsertIndicator,
   type User, type InsertUser,
@@ -19,7 +19,7 @@ export interface IStorage {
   getAllOrderItems(): Promise<OrderItem[]>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: number): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: InsertUser & { passwordHash?: string | null }): Promise<User>;
   updateUser(id: number, data: Partial<InsertUser>): Promise<User>;
   setUserAdmin(id: number, isAdmin: boolean): Promise<User>;
   getAllUsers(): Promise<User[]>;
@@ -80,11 +80,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async createUser(user: InsertUser): Promise<User> {
+  async createUser(user: InsertUser & { passwordHash?: string | null }): Promise<User> {
     const [result] = await db.insert(users).values({
       ...user,
       email: user.email.trim().toLowerCase(),
     }).returning();
+
     return result;
   }
 
