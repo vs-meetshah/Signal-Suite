@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -328,8 +328,8 @@ export function IndicatorFormDialog({
     (initial?.faqs || []).map((f) => `${f.q}\n${f.a}`).join("\n---\n")
   );
 
-  // Reset state when dialog opens with different indicator
-  useMemo(() => {
+  // Reset state when the dialog opens or a different indicator is loaded into it.
+  useEffect(() => {
     if (open) {
       const next = buildState();
       setForm(next);
@@ -420,6 +420,8 @@ export function IndicatorFormDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
         className="flex max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-full"
+        onPointerDownOutside={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
         data-testid="dialog-edit-indicator"
       >
         <DialogHeader className="shrink-0 px-6 pt-6">
