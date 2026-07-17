@@ -81,10 +81,10 @@ export function computeVersionPrice(version: ProductVersion, indicatorPrice: str
   return indicatorPrice;
 }
 
-export function computeTrialPrice(version: ProductVersion): string {
-  if (version === "both") return Math.round(5250 + 5250 * 1.35).toString();
-  if (version === "strategy") return Math.round(5250 * 1.35).toString();
-  return "5250";
+export function computeTrialPrice(version: ProductVersion, trialBasePrice: string): string {
+  if (version === "strategy") return computeStrategyPrice(trialBasePrice);
+  if (version === "both") return computeBothPrice(trialBasePrice);
+  return trialBasePrice;
 }
 
 export type AddResult = { ok: true } | { ok: false; reason: "exists" | "mixed"; cartVersion?: ProductVersion };
@@ -164,7 +164,7 @@ export function CartProvider({ children, userId }: { children: ReactNode; userId
     if (result.ok) {
       setItems((prev) => {
         if (evaluateAdd(prev, item.indicatorId, version).ok) {
-          return [...prev, { ...item, version, price: computeTrialPrice(version), duration: 1, isTrial: true }];
+          return [...prev, { ...item, version, price: computeTrialPrice(version, item.price), duration: 1, isTrial: true }];
         }
         return prev;
       });

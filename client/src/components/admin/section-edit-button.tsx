@@ -194,6 +194,10 @@ const SECTIONS: Record<SectionKey, SectionDef> = {
         hint: "Set 0 for free indicators."
       },
       {
+        key: "trialPrice", label: "Trial Price (₹) *", type: "number", required: true, placeholder: "5250",
+        hint: "Base trial price used for indicator-only trials."
+      },
+      {
         key: "trialDays", label: "Trial Days", type: "number", placeholder: "15",
         hint: "Premium only — typically 15."
       },
@@ -321,7 +325,7 @@ function SectionEditDialog({
               (payload as any)[f.key] = f.required ? 0 : null;
             } else {
               const n = parseFloat(s);
-              if (f.key === "price") {
+              if (f.key === "price" || f.key === "trialPrice") {
                 (payload as any)[f.key] = isNaN(n) ? "0" : String(Math.max(0, n));
               } else {
                 (payload as any)[f.key] = isNaN(n) ? 0 : n;

@@ -12,6 +12,7 @@ export const indicators = pgTable("indicators", {
   category: text("category").notNull(),
   tier: text("tier").notNull().default("premium"),
   price: text("price").notNull(),
+  trialPrice: text("trial_price").notNull().default("0"),
   videoUrl: text("video_url"),
   imageUrl: text("image_url"),
   features: text("features").array().notNull(),
@@ -92,6 +93,8 @@ export const orderItems = pgTable("order_items", {
 });
 
 export const insertIndicatorSchema = createInsertSchema(indicators).omit({ id: true }).extend({
+  price: z.string().min(1, "Price is required"),
+  trialPrice: z.string().min(1, "Trial price is required"),
   faqs: z.array(z.object({ q: z.string(), a: z.string() })).default([]).optional(),
 });
 

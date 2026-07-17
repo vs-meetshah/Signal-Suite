@@ -265,7 +265,7 @@ export default function IndicatorDetail() {
         indicatorId: indicator.id,
         name: indicator.name,
         slug: indicator.slug,
-        price: indicator.price,
+        price: indicator.trialPrice,
         version: dialogVersion,
       });
       if (!result.ok && result.reason === "mixed") {
@@ -374,7 +374,7 @@ export default function IndicatorDetail() {
           { key: "both" as ProductVersion, label: "Indicator + Strategy", icon: Sparkles, tagline: "Both versions bundled", price: bothVersionPrice, testId: "dialog-version-both" },
         ]).map(({ key, label, icon: VIcon, tagline, price, testId }) => {
           const active = dialogVersion === key;
-          const displayPrice = dialogIsTrial ? computeTrialPrice(key) : price;
+          const displayPrice = dialogIsTrial ? computeTrialPrice(key, indicator.trialPrice) : price;
           const isFreePrice = parseFloat(displayPrice) === 0;
           const inputId = `radio-${testId}`;
           return (
@@ -499,7 +499,7 @@ export default function IndicatorDetail() {
               const original = monthly * dialogMonths;
               const discount = getDurationDiscount(dialogMonths);
               const total = dialogIsTrial
-                ? parseFloat(computeTrialPrice(dialogVersion))
+                ? parseFloat(computeTrialPrice(dialogVersion, indicator.trialPrice))
                 : Math.round(original * (1 - discount));
               const savings = !dialogIsTrial && discount > 0 ? original - total : 0;
 
@@ -553,7 +553,7 @@ export default function IndicatorDetail() {
           <Separator className="my-4" />
 
           {(() => {
-            const trialPrice = parseFloat(computeTrialPrice(dialogVersion));
+            const trialPrice = parseFloat(computeTrialPrice(dialogVersion, indicator.trialPrice));
             const trialDays = indicator.trialDays || 15;
 
             return (

@@ -35,6 +35,7 @@ const EMPTY: FormState = {
   category: "",
   tier: "premium",
   price: "9000",
+  trialPrice: "5250",
   videoUrl: "",
   imageUrl: "",
   features: [],
@@ -289,6 +290,7 @@ export function IndicatorFormDialog({
       category: initial.category,
       tier: initial.tier,
       price: initial.price,
+      trialPrice: initial.trialPrice,
       videoUrl: initial.videoUrl || "",
       imageUrl: initial.imageUrl || "",
       features: initial.features || [],
@@ -412,6 +414,7 @@ export function IndicatorFormDialog({
     if (!form.description.trim()) return "Description is required";
     if (!form.category.trim()) return "Category is required";
     if (!form.price.trim()) return "Price is required";
+    if (!form.trialPrice.trim()) return "Trial price is required";
     if (textToArr(featuresText).length === 0) return "At least one feature is required";
     return null;
   }, [form, featuresText]);
@@ -498,6 +501,12 @@ export function IndicatorFormDialog({
                   <Input type="number" min="0" value={form.price}
                     onChange={(e) => update("price", e.target.value)}
                     placeholder="9000" data-testid="input-price"
+                  />
+                </Field>
+                <Field label="Trial Price (₹) *" hint="Base trial price used for indicator-only trials. Strategy and bundle trials are derived from this.">
+                  <Input type="number" min="0" value={form.trialPrice}
+                    onChange={(e) => update("trialPrice", e.target.value)}
+                    placeholder="5250" data-testid="input-trial-price"
                   />
                 </Field>
                 <Field label="Trial Days" hint="Premium only — typically 15">

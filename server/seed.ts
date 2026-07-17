@@ -10,6 +10,7 @@ const seedIndicators = [
     category: "Trend Following",
     tier: "premium",
     price: "9000",
+    trialPrice: "5250",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -41,6 +42,7 @@ const seedIndicators = [
     category: "Volume Analysis",
     tier: "premium",
     price: "9000",
+    trialPrice: "5250",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -72,6 +74,7 @@ const seedIndicators = [
     category: "Smart Money",
     tier: "premium",
     price: "9000",
+    trialPrice: "5250",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -103,6 +106,7 @@ const seedIndicators = [
     category: "Momentum",
     tier: "premium",
     price: "9000",
+    trialPrice: "5250",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -134,6 +138,7 @@ const seedIndicators = [
     category: "Volatility",
     tier: "premium",
     price: "9000",
+    trialPrice: "5250",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -165,6 +170,7 @@ const seedIndicators = [
     category: "Support/Resistance",
     tier: "premium",
     price: "9000",
+    trialPrice: "5250",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -196,6 +202,7 @@ const seedIndicators = [
     category: "Trend Following",
     tier: "free",
     price: "0",
+    trialPrice: "0",
     videoUrl: null,
     imageUrl: null,
     features: [
@@ -227,6 +234,7 @@ const seedIndicators = [
     category: "Momentum",
     tier: "free",
     price: "0",
+    trialPrice: "0",
     videoUrl: null,
     imageUrl: null,
     features: [
