@@ -106,12 +106,13 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
-    const { setupVite } = await import("./vite");
+    // Keep the Vite dev server out of the production bundle.
+    const { setupVite } = await eval('import("./vite.ts")');
     await setupVite(httpServer, app);
   }
 
   const port = parseInt(process.env.PORT || "5001", 10);
-  const host = process.env.HOST || "127.0.0.1";
+  const host = process.env.HOST || "0.0.0.0";
   httpServer.listen(
     {
       port,

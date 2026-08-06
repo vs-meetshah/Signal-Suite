@@ -13,33 +13,6 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
-
-import { db } from "./db";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
-(async () => {
-  const targetEmail = "meet@gmail.com";
-  const targetPassword = "1234";
-
-  const existingUser = await storage.getUserByEmail(targetEmail);
-
-  if (!existingUser) {
-    console.log(`[password-bootstrap] User not found: ${targetEmail}`);
-    return;
-  }
-
-  const passwordHash = await hashPassword(targetPassword);
-
-  await db
-    .update(users)
-    .set({ passwordHash })
-    .where(eq(users.id, existingUser.id));
-
-  console.log(`[password-bootstrap] Password updated for ${targetEmail}`);
-})().catch((error) => {
-  console.error("[password-bootstrap] Failed:", error);
-});
-
 const DURATION_DISCOUNTS: Record<number, number> = {
   1: 0.03,
   3: 0.06,
