@@ -7,6 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { computeCartItemTotal, getDurationDiscount, useCart } from "@/components/cart-provider";
 import { useAuth } from "@/components/auth-provider";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { Indicator } from "@shared/schema";
 
 const getVersionLabel = (version?: string | null) => {
   if (version === "strategy") return "Strategy";
@@ -29,9 +32,19 @@ const formatPrice = (value: number) => {
 const formatDiscount = (discount: number) => `${Math.round(discount * 100)}% off`;
 
 export default function CartPage() {
-  const { items, removeItem, totalPrice, clearCart } = useCart();
+  const { items, removeItem, totalPrice, clearCart, syncPrices } = useCart();
   const { user, openAuthModal } = useAuth();
   const [, navigate] = useLocation();
+
+  const { data: indicators } = useQuery<Indicator[]>({
+    queryKey: ["/api/indicators"],
+  });
+
+  useEffect(() => {
+    if (indicators?.length) {
+      syncPrices(indicators);
+    }
+  }, [indicators, syncPrices]);
 
   const handleProceed = () => {
     if (user) {

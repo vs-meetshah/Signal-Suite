@@ -363,6 +363,8 @@ function SectionEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="flex max-h-[90vh] w-[calc(100vw-1rem)] max-w-2xl flex-col overflow-hidden p-0 sm:w-full"
+        onPointerDownOutside={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
         data-testid={`dialog-section-${sectionKey}`}
       >
         <DialogHeader className="shrink-0 px-6 pt-6">

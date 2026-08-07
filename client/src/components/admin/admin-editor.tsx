@@ -423,8 +423,10 @@ export function IndicatorFormDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
         className="flex max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-full"
+        showClose={false}
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}
+        onEscapeKeyDown={(event) => event.preventDefault()}
         data-testid="dialog-edit-indicator"
       >
         <DialogHeader className="shrink-0 px-6 pt-6">

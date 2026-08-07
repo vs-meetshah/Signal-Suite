@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import type { Indicator } from "@shared/schema";
 
 export type ProductVersion = "indicator" | "strategy" | "both";
 
@@ -87,6 +88,15 @@ export function computeTrialPrice(version: ProductVersion, trialBasePrice: strin
   return trialBasePrice;
 }
 
+function getCurrentCartPrice(
+  item: Pick<CartItem, "version" | "isTrial">,
+  indicator: Pick<Indicator, "price" | "trialPrice">
+): string {
+  return item.isTrial
+    ? computeTrialPrice(item.version, indicator.trialPrice)
+    : computeVersionPrice(item.version, indicator.price);
+}
+
 export type AddResult = { ok: true } | { ok: false; reason: "exists" | "mixed"; cartVersion?: ProductVersion };
 
 interface CartContextType {
@@ -102,6 +112,7 @@ interface CartContextType {
   getCartItem: (indicatorId: number) => CartItem | undefined;
   cartVersion: ProductVersion | null;
   canAddVersion: (version: ProductVersion) => boolean;
+  syncPrices: (indicators: Pick<Indicator, "id" | "price" | "trialPrice">[]) => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -184,6 +195,27 @@ export function CartProvider({ children, userId }: { children: ReactNode; userId
 
   const clearCart = useCallback(() => setItems([]), []);
 
+  const syncPrices = useCallback((indicators: Pick<Indicator, "id" | "price" | "trialPrice">[]) => {
+    const byId = new Map(indicators.map((indicator) => [indicator.id, indicator]));
+
+    setItems((prev) => {
+      let changed = false;
+
+      const next = prev.map((item) => {
+        const indicator = byId.get(item.indicatorId);
+        if (!indicator) return item;
+
+        const currentPrice = getCurrentCartPrice(item, indicator);
+        if (currentPrice === item.price) return item;
+
+        changed = true;
+        return { ...item, price: currentPrice };
+      });
+
+      return changed ? next : prev;
+    });
+  }, []);
+
   const totalPrice = items.reduce((sum, item) => sum + computeCartItemTotal(item), 0);
 
   const itemCount = items.length;
@@ -207,7 +239,7 @@ export function CartProvider({ children, userId }: { children: ReactNode; userId
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, addTrial, removeItem, updateDuration, clearCart, totalPrice, itemCount, isInCart, getCartItem, cartVersion, canAddVersion }}
+      value={{ items, addItem, addTrial, removeItem, updateDuration, clearCart, totalPrice, itemCount, isInCart, getCartItem, cartVersion, canAddVersion, syncPrices }}
     >
       {children}
     </CartContext.Provider>

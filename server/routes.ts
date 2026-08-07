@@ -878,8 +878,8 @@ export async function registerRoutes(
       let price: string;
 
       if (isTrial) {
-        const trialIndicator = 5250;
-        const trialStrategy = Math.round(5250 * 1.35);
+        const trialIndicator = parseFloat(indicator.trialPrice) || 0;
+        const trialStrategy = trialIndicator === 0 ? 499 : Math.round(trialIndicator * 1.35);
 
         price =
           version === "strategy"

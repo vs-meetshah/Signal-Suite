@@ -14,9 +14,10 @@ import { computeCartItemTotal, getDurationDiscount, useCart } from "@/components
 import { useAuth } from "@/components/auth-provider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import type { Indicator } from "@shared/schema";
 declare global {
   interface Window {
     Razorpay?: any;
@@ -54,7 +55,7 @@ function loadRazorpayScript(): Promise<void> {
 }
 
 export default function Checkout() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, clearCart, syncPrices } = useCart();
   const { user, signupOrLogin, openAuthModal } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -63,6 +64,10 @@ export default function Checkout() {
   const [isEditing, setIsEditing] = useState(!user);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const { data: indicators } = useQuery<Indicator[]>({
+    queryKey: ["/api/indicators"],
+  });
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(user ? insertUserSchema : authSignupSchema),
@@ -95,6 +100,12 @@ export default function Checkout() {
       setShowConfirmPassword(false);
     }
   }, [user, form]);
+
+  useEffect(() => {
+    if (indicators?.length) {
+      syncPrices(indicators);
+    }
+  }, [indicators, syncPrices]);
 
   const submitMutation = useMutation({
     mutationFn: async (data: CheckoutFormData) => {

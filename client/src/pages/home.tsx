@@ -28,7 +28,7 @@ const keyFeatures = [
     icon: Crosshair,
     title: "Non-Repainting",
     description: "100% non-repainting signals you can trust on closed candles.",
-    iconClass: "text-sky-300",
+    iconClass: "text-sky-500 dark:text-sky-300",
     ringClass: "ring-sky-400/30",
     glowClass: "from-sky-500/20 to-sky-500/0",
   },
@@ -36,7 +36,7 @@ const keyFeatures = [
     icon: Target,
     title: "High Accuracy",
     description: "Backtested across 5+ years of multi-asset, multi-regime data.",
-    iconClass: "text-emerald-300",
+    iconClass: "text-emerald-500 dark:text-emerald-300",
     ringClass: "ring-emerald-400/30",
     glowClass: "from-emerald-500/20 to-emerald-500/0",
   },
@@ -44,7 +44,7 @@ const keyFeatures = [
     icon: Layers,
     title: "Multi-Timeframe",
     description: "Works seamlessly on every timeframe from 1m scalps to weekly swings.",
-    iconClass: "text-zinc-200",
+    iconClass: "text-slate-500 dark:text-zinc-200",
     ringClass: "ring-zinc-400/25",
     glowClass: "from-zinc-400/15 to-zinc-400/0",
   },
@@ -52,7 +52,7 @@ const keyFeatures = [
     icon: BellRing,
     title: "Real-Time Alerts",
     description: "Get notified on every high-probability setup the moment it triggers.",
-    iconClass: "text-pink-300",
+    iconClass: "text-pink-500 dark:text-pink-300",
     ringClass: "ring-pink-400/30",
     glowClass: "from-pink-500/20 to-pink-500/0",
   },
@@ -60,7 +60,7 @@ const keyFeatures = [
     icon: MousePointer2,
     title: "Easy to Use",
     description: "Plug and play directly on TradingView in under two minutes.",
-    iconClass: "text-blue-300",
+    iconClass: "text-blue-500 dark:text-blue-300",
     ringClass: "ring-blue-400/30",
     glowClass: "from-blue-500/20 to-blue-500/0",
   },
@@ -68,7 +68,7 @@ const keyFeatures = [
     icon: Feather,
     title: "Lightweight",
     description: "Optimized code keeps your charts fast with zero lag or stutter.",
-    iconClass: "text-indigo-300",
+    iconClass: "text-indigo-500 dark:text-indigo-300",
     ringClass: "ring-indigo-400/30",
     glowClass: "from-indigo-500/20 to-indigo-500/0",
   },
@@ -183,7 +183,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-black border-t border-white/5" data-testid="section-connect">
+      <section className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background dark:border-white/5 dark:from-black dark:via-zinc-950 dark:to-black" data-testid="section-connect">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
         <div className="absolute -top-32 right-1/3 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -192,7 +192,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 shadow-2xl"
+            className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-muted/40 shadow-2xl dark:border-white/10 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950"
           >
             <div
               className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-25"
@@ -224,13 +224,13 @@ export default function Home() {
 
               <div className="relative px-6 pb-10 pt-2 md:px-10 md:py-12 lg:pr-16">
                 <h2
-                  className="text-3xl font-bold tracking-tight text-white sm:text-4xl"
+                  className="text-3xl font-bold tracking-tight text-foreground dark:text-white sm:text-4xl"
                   data-testid="text-connect-title"
                 >
                   Or connect with us on<span className="text-primary">/.</span>
                 </h2>
                 <p
-                  className="mt-3 max-w-md text-base text-zinc-400"
+                  className="mt-3 max-w-md text-base text-muted-foreground dark:text-zinc-400"
                   data-testid="text-connect-subtitle"
                 >
                   Join thousands of traders in the Pine Signal Lab community. Get started today!
@@ -244,7 +244,7 @@ export default function Home() {
                       rel="noopener noreferrer"
                       aria-label={s.name}
                       title={s.name}
-                      className={`group inline-flex h-11 w-11 items-center justify-center rounded-md ${s.bg} text-white shadow-lg shadow-black/30 transition-transform hover:scale-110 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900`}
+                      className={`group inline-flex h-11 w-11 items-center justify-center rounded-md ${s.bg} text-white shadow-lg shadow-black/20 transition-transform hover:scale-110 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:shadow-black/30 dark:focus-visible:ring-offset-zinc-900`}
                       data-testid={`link-social-${s.name.toLowerCase()}`}
                     >
                       <s.icon className="h-5 w-5" />
@@ -310,7 +310,7 @@ const frameworkSteps = [
 function SystemFramework() {
   return (
     <section
-      className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-black via-zinc-950 to-zinc-950 py-20 sm:py-24"
+      className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background py-20 sm:py-24 dark:border-white/5 dark:from-black dark:via-zinc-950 dark:to-zinc-950"
       data-testid="section-framework"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
@@ -340,12 +340,12 @@ function SystemFramework() {
             How It Works
           </Badge>
           <h2
-            className="text-3xl font-bold tracking-tight text-white sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-foreground dark:text-white sm:text-4xl"
             data-testid="text-framework-title"
           >
             Our System Framework
           </h2>
-          <p className="mt-3 text-base text-zinc-400">
+          <p className="mt-3 text-base text-muted-foreground dark:text-zinc-400">
             A disciplined four-stage process behind every Pine Signal Lab signal — from raw market structure to a high-probability trade plan.
           </p>
         </motion.div>
@@ -357,7 +357,7 @@ function SystemFramework() {
             whileInView={{ scaleX: 1, opacity: 1 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 1.1, ease: "easeOut", delay: 0.1 }}
-            className="pointer-events-none absolute left-6 right-6 top-9 hidden h-px origin-left bg-gradient-to-r from-sky-400/0 via-white/30 to-emerald-400/0 lg:block"
+            className="pointer-events-none absolute left-6 right-6 top-9 hidden h-px origin-left bg-gradient-to-r from-sky-400/0 via-border to-emerald-400/0 lg:block dark:via-white/30"
           />
 
           <ol className="relative grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
@@ -373,7 +373,7 @@ function SystemFramework() {
                   className="relative"
                   data-testid={`framework-step-${i}`}
                 >
-                  <div className="group relative h-full rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]">
+                  <div className="group relative h-full rounded-2xl border border-border bg-gradient-to-b from-card to-muted/30 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01] dark:hover:border-white/20 dark:hover:bg-white/[0.05]">
                     <div
                       className="absolute inset-x-6 -top-px h-px opacity-70"
                       style={{
@@ -384,16 +384,16 @@ function SystemFramework() {
                     <div className="mb-5 flex items-center gap-3">
                       <div className={`relative flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${step.accent} ring-1 ${step.ring} ${step.glow} transition-transform duration-300 group-hover:scale-105`}>
                         <Icon className={`h-6 w-6 ${step.iconColor}`} strokeWidth={2.2} />
-                        <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/15 bg-zinc-900 text-[10px] font-semibold text-zinc-300">
+                        <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-[10px] font-semibold text-muted-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-300">
                           {String(i + 1).padStart(2, "0")}
                         </span>
                       </div>
                     </div>
 
-                    <h3 className="text-lg font-semibold text-white" data-testid={`text-framework-step-title-${i}`}>
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white" data-testid={`text-framework-step-title-${i}`}>
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-zinc-400" data-testid={`text-framework-step-desc-${i}`}>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground dark:text-zinc-400" data-testid={`text-framework-step-desc-${i}`}>
                       {step.description}
                     </p>
 
@@ -413,7 +413,7 @@ function SystemFramework() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true, margin: "-80px" }}
                         transition={{ duration: 0.5, delay: 0.4 + i * 0.12 }}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-zinc-900/80 text-zinc-300 backdrop-blur"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/80 text-muted-foreground backdrop-blur dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-300"
                       >
                         <ArrowRight className="h-4 w-4" />
                       </motion.div>
@@ -422,7 +422,7 @@ function SystemFramework() {
 
                   {i < frameworkSteps.length - 1 && (
                     <div aria-hidden className="flex justify-center pt-4 sm:hidden">
-                      <ArrowRight className="h-5 w-5 rotate-90 text-zinc-500" />
+                      <ArrowRight className="h-5 w-5 rotate-90 text-muted-foreground dark:text-zinc-500" />
                     </div>
                   )}
                 </motion.li>
@@ -480,7 +480,7 @@ const pricingPlans = [
 function PricingPlans() {
   return (
     <section
-      className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black py-20 sm:py-24"
+      className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background py-20 sm:py-24 dark:border-white/5 dark:from-zinc-950 dark:via-zinc-950 dark:to-black"
       data-testid="section-pricing"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
@@ -510,12 +510,12 @@ function PricingPlans() {
             Pricing
           </Badge>
           <h2
-            className="text-3xl font-bold tracking-tight text-white sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-foreground dark:text-white sm:text-4xl"
             data-testid="text-pricing-title"
           >
             Choose Your Plan
           </h2>
-          <p className="mt-3 text-base text-zinc-400">
+          <p className="mt-3 text-base text-muted-foreground dark:text-zinc-400">
             Simple, transparent pricing. Upgrade, downgrade, or cancel any time — no questions asked.
           </p>
         </motion.div>
@@ -535,7 +535,7 @@ function PricingPlans() {
               >
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 z-20 -translate-x-1/2">
-                    <div className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-zinc-950 px-3 py-1 text-xs font-semibold text-primary shadow-[0_0_24px_-4px_hsl(var(--primary)/0.55)]">
+                    <div className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-background px-3 py-1 text-xs font-semibold text-primary shadow-[0_0_24px_-4px_hsl(var(--primary)/0.35)] dark:bg-zinc-950 dark:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.55)]">
                       <Sparkles className="h-3.5 w-3.5" />
                       Most Popular
                     </div>
@@ -544,36 +544,36 @@ function PricingPlans() {
 
                 <div
                   className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border p-7 transition-all duration-300 ${isPopular
-                    ? "border-primary/50 bg-gradient-to-b from-primary/[0.08] via-zinc-900 to-zinc-950 shadow-[0_0_60px_-15px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_80px_-15px_hsl(var(--primary)/0.65)]"
-                    : "border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]"
+                    ? "border-primary/40 bg-gradient-to-b from-primary/[0.08] via-card to-muted/40 shadow-[0_0_60px_-15px_hsl(var(--primary)/0.24)] hover:shadow-[0_0_80px_-15px_hsl(var(--primary)/0.32)] dark:border-primary/50 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-[0_0_60px_-15px_hsl(var(--primary)/0.5)] dark:hover:shadow-[0_0_80px_-15px_hsl(var(--primary)/0.65)]"
+                    : "border-border bg-gradient-to-b from-card to-muted/30 hover:-translate-y-1 hover:border-primary/20 hover:bg-card dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01] dark:hover:border-white/20 dark:hover:bg-white/[0.05]"
                     }`}
                 >
                   <div
                     className={`pointer-events-none absolute inset-x-7 -top-px h-px ${isPopular
                       ? "bg-gradient-to-r from-transparent via-primary to-transparent opacity-80"
-                      : "bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50"
+                      : "bg-gradient-to-r from-transparent via-border to-transparent opacity-70 dark:via-white/30 dark:opacity-50"
                       }`}
                   />
 
                   <div className="mb-5">
                     <h3
-                      className={`text-xl font-semibold ${isPopular ? "text-primary" : "text-white"}`}
+                      className={`text-xl font-semibold ${isPopular ? "text-primary" : "text-foreground dark:text-white"}`}
                       data-testid={`text-plan-name-${plan.name.toLowerCase()}`}
                     >
                       {plan.name}
                     </h3>
-                    <p className="mt-1 text-sm text-zinc-400">{plan.description}</p>
+                    <p className="mt-1 text-sm text-muted-foreground dark:text-zinc-400">{plan.description}</p>
                   </div>
 
                   <div className="mb-6 flex items-baseline gap-1">
                     <span
-                      className="text-5xl font-bold tracking-tight text-white"
+                      className="text-5xl font-bold tracking-tight text-foreground dark:text-white"
                       data-testid={`text-plan-price-${plan.name.toLowerCase()}`}
                     >
-                      <span className="text-3xl align-top mr-0.5 text-zinc-300">₹</span>
+                      <span className="mr-0.5 text-3xl align-top text-muted-foreground dark:text-zinc-300">₹</span>
                       {plan.price.toLocaleString("en-IN")}
                     </span>
-                    <span className="text-sm font-medium text-zinc-400">/month</span>
+                    <span className="text-sm font-medium text-muted-foreground dark:text-zinc-400">/month</span>
                   </div>
 
                   <ul className="mb-8 space-y-3">
@@ -582,13 +582,13 @@ function PricingPlans() {
                       return (
                         <li
                           key={f.label}
-                          className="flex items-start gap-3 text-sm text-zinc-200"
+                          className="flex items-start gap-3 text-sm text-foreground dark:text-zinc-200"
                           data-testid={`feature-${plan.name.toLowerCase()}-${fi}`}
                         >
                           <span
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${isPopular
                               ? "bg-primary/15 text-primary"
-                              : "bg-white/5 text-zinc-300"
+                              : "bg-muted text-muted-foreground dark:bg-white/5 dark:text-zinc-300"
                               }`}
                           >
                             <FIcon className="h-3.5 w-3.5" strokeWidth={2.6} />
@@ -605,7 +605,7 @@ function PricingPlans() {
                       size="lg"
                       className={`w-full ${isPopular
                         ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30"
-                        : "bg-white/5 text-white hover:bg-white/10 border border-white/15"
+                        : "border border-border bg-background text-foreground hover:bg-muted dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                         }`}
                       data-testid={`button-plan-${plan.name.toLowerCase()}`}
                     >
@@ -628,7 +628,7 @@ function PricingPlans() {
           })}
         </div>
 
-        <p className="mt-8 text-center text-xs text-zinc-500">
+        <p className="mt-8 text-center text-xs text-muted-foreground dark:text-zinc-500">
           All prices in INR. Taxes may apply. Cancel anytime from your account.
         </p>
       </div>
@@ -700,7 +700,7 @@ function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden bg-black" id="footer" data-testid="site-footer">
+    <footer className="relative overflow-hidden bg-background dark:bg-black" id="footer" data-testid="site-footer">
       <div className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -734,8 +734,8 @@ function SiteFooter() {
               className="relative flex h-20 w-20 items-center justify-center sm:h-24 sm:w-24"
             >
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-400/40 via-primary/40 to-fuchsia-500/40 blur-xl" />
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 to-white/[0.02] shadow-inner sm:h-20 sm:w-20">
-                <Rocket className="h-8 w-8 -rotate-12 text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.4)] sm:h-10 sm:w-10" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-white/95 to-slate-100 shadow-inner sm:h-20 sm:w-20">
+                <Rocket className="h-8 w-8 -rotate-12 text-slate-900 drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)] sm:h-10 sm:w-10" />
                 <span className="absolute -bottom-1 left-1/2 h-3 w-1 -translate-x-1/2 rounded-full bg-orange-400 blur-[2px]" />
               </div>
             </motion.div>
@@ -747,7 +747,7 @@ function SiteFooter() {
               >
                 Stop Guessing. Start Executing.
               </h2>
-              <p className="mt-2 text-sm text-zinc-300 sm:text-base">
+              <p className="mt-2 text-sm text-blue-100/85 sm:text-base">
                 Join thousands of profitable traders who trust our indicators.
               </p>
             </div>
@@ -779,9 +779,9 @@ function SiteFooter() {
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 ring-1 ring-primary/30">
                 <TrendingUp className="h-4 w-4 text-primary" />
               </span>
-              <span className="text-lg font-bold text-white">Pine Signal Lab</span>
+              <span className="text-lg font-bold text-foreground dark:text-white">Pine Signal Lab</span>
             </Link>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-400">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
               Premium TradingView indicators for serious traders. Built with precision, tested for performance.
             </p>
             <div className="mt-5 flex items-center gap-3" data-testid="list-footer-social">
@@ -793,7 +793,7 @@ function SiteFooter() {
                   rel="noopener noreferrer"
                   aria-label={s.name}
                   title={s.name}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/5 text-zinc-300 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/5 dark:text-zinc-300"
                   data-testid={`link-footer-social-${s.name.toLowerCase()}`}
                 >
                   <s.icon className="h-4 w-4" />
@@ -805,13 +805,13 @@ function SiteFooter() {
           <div className="grid grid-cols-2 gap-8 sm:col-span-2 sm:grid-cols-3 lg:col-span-5 lg:grid-cols-3 lg:gap-6 lg:pl-4">
             {footerColumns.map((col) => (
               <div key={col.title}>
-                <h3 className="text-sm font-semibold text-white">{col.title}</h3>
+                <h3 className="text-sm font-semibold text-foreground dark:text-white">{col.title}</h3>
                 <ul className="mt-4 space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.label}>
                       <Link
                         href={l.href}
-                        className="text-sm text-zinc-400 transition-colors hover:text-primary"
+                        className="text-sm text-muted-foreground transition-colors hover:text-primary dark:text-zinc-400"
                         data-testid={`link-footer-${l.label.toLowerCase().replace(/\s+/g, "-")}`}
                       >
                         {l.label}
@@ -824,8 +824,8 @@ function SiteFooter() {
           </div>
 
           <div className="lg:col-span-3">
-            <h3 className="text-sm font-semibold text-white">Stay Updated</h3>
-            <p className="mt-4 text-sm text-zinc-400">
+            <h3 className="text-sm font-semibold text-foreground dark:text-white">Stay Updated</h3>
+            <p className="mt-4 text-sm text-muted-foreground dark:text-zinc-400">
               Get the latest updates and market insights.
             </p>
             <form
@@ -842,7 +842,7 @@ function SiteFooter() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 aria-label="Email address"
-                className="h-10 flex-1 border-white/10 bg-white/5 text-sm text-white placeholder:text-zinc-500 focus-visible:border-primary/60 focus-visible:ring-primary/40"
+                className="h-10 flex-1 border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary/60 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-zinc-500"
                 data-testid="input-newsletter-email"
               />
               <Button
@@ -864,8 +864,8 @@ function SiteFooter() {
           </div>
         </motion.div>
 
-        <div className="border-t border-white/10 py-6">
-          <div className="flex flex-col items-center justify-between gap-3 text-xs text-zinc-500 sm:flex-row">
+        <div className="border-t border-border py-6 dark:border-white/10">
+          <div className="flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground dark:text-zinc-500 sm:flex-row">
             <p data-testid="text-footer-copyright">
               © {year} Pine Signal Lab. All rights reserved.
             </p>
@@ -940,17 +940,17 @@ type Testimonial = (typeof testimonials)[number];
 
 function TestimonialCard({ t }: { t: Testimonial }) {
   return (
-    <div className="flex h-full w-[300px] shrink-0 flex-col rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06] sm:w-[340px]">
+    <div className="flex h-full w-[300px] shrink-0 flex-col rounded-xl border border-border bg-gradient-to-b from-card to-muted/30 p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01] dark:hover:border-white/20 dark:hover:bg-white/[0.06] sm:w-[340px]">
       <Quote aria-hidden className="mb-3 h-4 w-4 text-primary/60" />
       <div className="flex items-center gap-3">
-        <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${t.accent} ring-1 ring-white/15`}>
-          <span className="text-sm font-semibold text-white">{t.initials}</span>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${t.accent} ring-1 ring-border shadow-sm dark:ring-white/15`}>
+          <span className="text-sm font-semibold text-slate-700 dark:text-white">{t.initials}</span>
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white" data-testid={`text-testimonial-name-${t.initials.toLowerCase()}`}>
+          <p className="truncate text-sm font-semibold text-foreground dark:text-white" data-testid={`text-testimonial-name-${t.initials.toLowerCase()}`}>
             {t.name}
           </p>
-          <p className="truncate text-xs text-zinc-400">{t.role}</p>
+          <p className="truncate text-xs text-slate-500 dark:text-zinc-400">{t.role}</p>
         </div>
         <div className="ml-auto flex items-center gap-0.5">
           {Array.from({ length: t.rating }).map((_, i) => (
@@ -958,7 +958,7 @@ function TestimonialCard({ t }: { t: Testimonial }) {
           ))}
         </div>
       </div>
-      <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-zinc-300">
+      <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-slate-600 dark:text-zinc-300">
         {t.quote}
       </p>
     </div>
@@ -1008,7 +1008,7 @@ function Testimonials() {
 
   return (
     <section
-      className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 py-14 sm:py-16"
+      className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background py-14 sm:py-16 dark:border-white/5 dark:from-zinc-950 dark:via-black dark:to-zinc-950"
       data-testid="section-testimonials"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
@@ -1026,12 +1026,12 @@ function Testimonials() {
             Loved by traders
           </Badge>
           <h2
-            className="text-2xl font-bold tracking-tight text-white sm:text-3xl"
+            className="text-2xl font-bold tracking-tight text-foreground dark:text-white sm:text-3xl"
             data-testid="text-testimonials-title"
           >
             Real Traders. Real Results.
           </h2>
-          <p className="mt-2 max-w-xl text-sm text-zinc-400">
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground dark:text-zinc-400">
             A glimpse into what Pine Signal Lab members say after putting our indicators on their charts.
           </p>
         </motion.div>
@@ -1044,8 +1044,8 @@ function Testimonials() {
         transition={{ duration: 0.6, delay: 0.15 }}
         className="relative mt-10"
       >
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-zinc-950 to-transparent sm:w-20" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-zinc-950 to-transparent sm:w-20" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-zinc-950 dark:via-zinc-950/80 sm:w-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background via-background/80 to-transparent dark:from-zinc-950 dark:via-zinc-950/80 sm:w-10" />
 
         <TestimonialRow items={rowA} durationSeconds={48} testId="testimonials-row-a" />
         <div className="h-4" />
@@ -1071,7 +1071,7 @@ function KeyFeatures() {
   return (
     <section
       id="features"
-      className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-black via-zinc-950 to-black py-14 sm:py-16"
+      className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background py-14 sm:py-16 dark:border-white/5 dark:from-black dark:via-zinc-950 dark:to-black"
       data-testid="section-key-features"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
@@ -1093,12 +1093,12 @@ function KeyFeatures() {
             Key Features
           </Badge>
           <h2
-            className="text-2xl font-bold tracking-tight text-white sm:text-3xl"
+            className="text-2xl font-bold tracking-tight text-foreground dark:text-white sm:text-3xl"
             data-testid="text-key-features-title"
           >
             Built for traders who demand precision.
           </h2>
-          <p className="mt-2 text-sm text-zinc-400 sm:text-base">
+          <p className="mt-2 text-sm text-muted-foreground dark:text-zinc-400 sm:text-base">
             Why traders love Pine Signal Lab indicators.
           </p>
         </motion.div>
@@ -1120,7 +1120,7 @@ function KeyFeatures() {
                 hidden: { opacity: 0, y: 16 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
               }}
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
+              className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-b from-card to-muted/30 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01] dark:hover:border-white/20 dark:hover:bg-white/[0.06]"
               data-testid={`card-feature-${f.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
             >
               <div
@@ -1129,19 +1129,19 @@ function KeyFeatures() {
               />
 
               <div
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-white/5 ring-1 ${f.ringClass} transition-transform duration-300 group-hover:scale-105`}
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-muted/70 ring-1 ${f.ringClass} transition-transform duration-300 group-hover:scale-105 dark:bg-white/5`}
               >
                 <f.icon className={`h-5 w-5 ${f.iconClass}`} aria-hidden />
               </div>
 
-              <h3 className="mt-4 text-base font-semibold text-white">
+              <h3 className="mt-4 text-base font-semibold text-foreground dark:text-white">
                 {f.title}
               </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
                 {f.description}
               </p>
 
-              <div className="mt-5 h-px w-full bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-60" />
+              <div className="mt-5 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent opacity-70 dark:via-white/10 dark:opacity-60" />
             </motion.li>
           ))}
         </motion.ul>

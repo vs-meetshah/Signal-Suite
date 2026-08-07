@@ -31,7 +31,7 @@ export default function IndicatorMarquee() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black py-16 sm:py-20"
+      className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background py-16 sm:py-20 dark:border-white/5 dark:from-zinc-950 dark:via-zinc-950 dark:to-black"
       data-testid="section-indicator-marquee"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
@@ -44,10 +44,10 @@ export default function IndicatorMarquee() {
             <Badge variant="secondary" className="mb-3 border-primary/20 bg-primary/10 text-primary" data-testid="badge-marquee">
               Featured
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl" data-testid="text-marquee-title">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground dark:text-white sm:text-4xl" data-testid="text-marquee-title">
               Our Premium Indicators
             </h2>
-            <p className="mt-2 max-w-xl text-sm text-zinc-400">
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground dark:text-zinc-400">
               A live look at what's trending in the Pine Signal Lab catalog. Hover to pause.
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function IndicatorMarquee() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-72 w-[300px] shrink-0 animate-pulse rounded-lg border border-white/5 bg-white/[0.02] sm:w-[320px]"
+                className="h-72 w-[300px] shrink-0 animate-pulse rounded-lg border border-border bg-card sm:w-[320px] dark:border-white/5 dark:bg-white/[0.02]"
               />
             ))}
           </div>
@@ -96,7 +96,7 @@ export default function IndicatorMarquee() {
         )}
 
         {!isLoading && track.length === 0 && (
-          <div className="px-6 text-center text-sm text-zinc-500 sm:px-10" data-testid="marquee-empty">
+          <div className="px-6 text-center text-sm text-muted-foreground dark:text-zinc-500 sm:px-10" data-testid="marquee-empty">
             No indicators available yet.
           </div>
         )}
@@ -104,7 +104,7 @@ export default function IndicatorMarquee() {
 
       <div className="mt-8 flex justify-center sm:hidden">
         <Link href="/indicators">
-          <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/10" data-testid="link-marquee-view-all-mobile">
+          <Button variant="outline" className="border-border bg-background text-foreground hover:bg-muted dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10" data-testid="link-marquee-view-all-mobile">
             View All Indicators <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         </Link>

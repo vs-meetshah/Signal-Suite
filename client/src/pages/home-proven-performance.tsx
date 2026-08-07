@@ -83,9 +83,9 @@ function EquityChartTooltip({ active, payload }: { active?: boolean; payload?: A
   if (!active || !payload?.length) return null;
   const v = payload[0].value;
   return (
-    <div className="rounded-md border border-white/10 bg-zinc-900/90 px-2.5 py-1.5 text-xs shadow-lg backdrop-blur">
-      <div className="text-[10px] uppercase tracking-wider text-zinc-400">Equity</div>
-      <div className="font-semibold text-emerald-300">
+    <div className="rounded-md border border-border bg-popover/95 px-2.5 py-1.5 text-xs shadow-lg backdrop-blur dark:border-white/10 dark:bg-zinc-900/90">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-zinc-400">Equity</div>
+      <div className="font-semibold text-emerald-700 dark:text-emerald-300">
         {v >= 0 ? "+" : "-"}₹{Math.abs(v).toLocaleString("en-IN")}
       </div>
     </div>
@@ -99,7 +99,7 @@ export default function ProvenPerformance() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-black via-zinc-950 to-black py-14 sm:py-16"
+      className="relative overflow-hidden border-t border-border bg-gradient-to-b from-background via-muted/30 to-background py-14 sm:py-16 dark:border-white/5 dark:from-black dark:via-zinc-950 dark:to-black"
       data-testid="section-proven-performance"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
@@ -114,13 +114,13 @@ export default function ProvenPerformance() {
           className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"
         >
           <div>
-            <Badge variant="secondary" className="mb-3 border-emerald-400/20 bg-emerald-500/10 text-emerald-300" data-testid="badge-proven-performance">
+            <Badge variant="secondary" className="mb-3 border-emerald-400/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" data-testid="badge-proven-performance">
               Proven Performance
             </Badge>
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl" data-testid="text-proven-performance-title">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground dark:text-white sm:text-3xl" data-testid="text-proven-performance-title">
               Numbers that speak for themselves.
             </h2>
-            <p className="mt-2 max-w-xl text-sm text-zinc-400 sm:text-base">
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground dark:text-zinc-400 sm:text-base">
               Live equity curve, transparent statistics and recent trades from our flagship strategy.
             </p>
           </div>
@@ -133,13 +133,13 @@ export default function ProvenPerformance() {
           transition={{ duration: 0.55, delay: 0.1 }}
           className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-12"
         >
-          <div className="rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-4 sm:p-5 lg:col-span-5" data-testid="card-equity-curve">
+          <div className="rounded-xl border border-border bg-gradient-to-b from-card to-muted/30 p-4 sm:p-5 lg:col-span-5 dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01]" data-testid="card-equity-curve">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white">Equity Curve</h3>
-                <p className="text-[11px] text-zinc-500">Cumulative PnL over time</p>
+                <h3 className="text-sm font-semibold text-foreground dark:text-white">Equity Curve</h3>
+                <p className="text-[11px] text-muted-foreground dark:text-zinc-500">Cumulative PnL over time</p>
               </div>
-              <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-zinc-300">
+              <span className="rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
                 All Time
               </span>
             </div>
@@ -155,12 +155,12 @@ export default function ProvenPerformance() {
                   </defs>
                   <XAxis
                     dataKey="month"
-                    tick={{ fill: "#71717a", fontSize: 10 }}
+                    tick={{ fill: "#64748b", fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "#71717a", fontSize: 10 }}
+                    tick={{ fill: "#64748b", fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v) => `${v / 1000}K`}
@@ -185,13 +185,13 @@ export default function ProvenPerformance() {
                 transition={{ duration: 0.5, delay: 1.2 }}
                 className="pointer-events-none absolute right-3 top-3 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-xs backdrop-blur"
               >
-                <div className="text-[10px] uppercase tracking-wider text-emerald-300/80">Total Return</div>
-                <div className="font-semibold text-emerald-300">+18.47%</div>
+                <div className="text-[10px] uppercase tracking-wider text-emerald-700/80 dark:text-emerald-300/80">Total Return</div>
+                <div className="font-semibold text-emerald-700 dark:text-emerald-300">+18.47%</div>
               </motion.div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-4 sm:p-5 lg:col-span-3" data-testid="card-stats-grid">
+          <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-gradient-to-b from-card to-muted/30 p-4 sm:p-5 lg:col-span-3 dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01]" data-testid="card-stats-grid">
             {performanceStats.map((s, i) => (
               <motion.div
                 key={s.label}
@@ -199,18 +199,18 @@ export default function ProvenPerformance() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.4, delay: 0.15 + i * 0.06 }}
-                className="rounded-lg border border-white/5 bg-white/[0.02] p-3 transition-colors hover:border-white/15 hover:bg-white/[0.05]"
+                className="rounded-lg border border-border bg-background/80 p-3 transition-colors hover:border-primary/20 hover:bg-card dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/15 dark:hover:bg-white/[0.05]"
                 data-testid={`stat-${s.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
               >
-                <div className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground dark:text-zinc-500">
                   {s.label}
                 </div>
                 <div
                   className={`mt-1.5 text-lg font-bold tabular-nums ${s.tone === "positive"
-                    ? "text-emerald-300"
+                    ? "text-emerald-600 dark:text-emerald-300"
                     : s.tone === "negative"
-                      ? "text-rose-400"
-                      : "text-white"
+                      ? "text-rose-500 dark:text-rose-400"
+                      : "text-foreground dark:text-white"
                     }`}
                 >
                   <AnimatedNumber
@@ -225,10 +225,10 @@ export default function ProvenPerformance() {
             ))}
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-4 sm:p-5 lg:col-span-4" data-testid="card-recent-trades">
+          <div className="rounded-xl border border-border bg-gradient-to-b from-card to-muted/30 p-4 sm:p-5 lg:col-span-4 dark:border-white/10 dark:from-white/[0.04] dark:to-white/[0.01]" data-testid="card-recent-trades">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Recent Trades</h3>
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+              <h3 className="text-sm font-semibold text-foreground dark:text-white">Recent Trades</h3>
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
                 Live
               </span>
             </div>
@@ -236,7 +236,7 @@ export default function ProvenPerformance() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="text-[10px] uppercase tracking-wider text-zinc-500">
+                  <tr className="text-[10px] uppercase tracking-wider text-muted-foreground dark:text-zinc-500">
                     <th className="pb-2 pr-3 font-medium">Date</th>
                     <th className="pb-2 pr-3 font-medium">Asset</th>
                     <th className="pb-2 pr-3 font-medium">Type</th>
@@ -244,7 +244,7 @@ export default function ProvenPerformance() {
                     <th className="pb-2 font-medium">RR</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-border dark:divide-white/5">
                   {recentTrades.map((t, i) => (
                     <motion.tr
                       key={`${t.asset}-${i}`}
@@ -252,29 +252,29 @@ export default function ProvenPerformance() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true, margin: "-80px" }}
                       transition={{ duration: 0.35, delay: 0.2 + i * 0.05 }}
-                      className="text-zinc-300"
+                      className="text-foreground dark:text-zinc-300"
                       data-testid={`row-trade-${i}`}
                     >
-                      <td className="whitespace-nowrap py-2.5 pr-3 text-zinc-400">{t.time}</td>
-                      <td className="py-2.5 pr-3 font-medium text-white">{t.asset}</td>
+                      <td className="whitespace-nowrap py-2.5 pr-3 text-muted-foreground dark:text-zinc-400">{t.time}</td>
+                      <td className="py-2.5 pr-3 font-medium text-foreground dark:text-white">{t.asset}</td>
                       <td className="py-2.5 pr-3">
                         <span
                           className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${t.type === "BUY"
-                            ? "bg-emerald-500/15 text-emerald-300"
-                            : "bg-rose-500/15 text-rose-300"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                            : "bg-rose-500/15 text-rose-600 dark:text-rose-300"
                             }`}
                         >
                           {t.type}
                         </span>
                       </td>
                       <td
-                        className={`py-2.5 pr-3 font-semibold tabular-nums ${t.result >= 0 ? "text-emerald-300" : "text-rose-400"
+                        className={`py-2.5 pr-3 font-semibold tabular-nums ${t.result >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-500 dark:text-rose-400"
                           }`}
                       >
                         {t.result >= 0 ? "+" : ""}
                         {t.result.toFixed(2)}%
                       </td>
-                      <td className="py-2.5 text-zinc-400 tabular-nums">{t.rr}</td>
+                      <td className="py-2.5 text-muted-foreground tabular-nums dark:text-zinc-400">{t.rr}</td>
                     </motion.tr>
                   ))}
                 </tbody>
